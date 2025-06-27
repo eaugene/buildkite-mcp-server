@@ -43,7 +43,7 @@ func (a *BuildkiteClientAdapter) DownloadArtifactByURL(ctx context.Context, url 
 // rewriteArtifactURL rewrites artifact URLs to use the configured base URL
 func (a *BuildkiteClientAdapter) rewriteArtifactURL(url string) string {
 	// Get the configured base URL from the client
-	clientBaseURL := a.Client.BaseURL.String()
+	clientBaseURL := a.BaseURL.String()
 
 	// If the client is using a custom base URL (not the default api.buildkite.com)
 	// and the artifact URL is using the default URL, rewrite it
