@@ -208,28 +208,52 @@ func TestBuildkiteClientAdapter_URLRewriting(t *testing.T) {
 		expectedURL string
 	}{
 		{
-			name:        "should rewrite api.buildkite.com URLs when using custom base URL",
+			name:        "should rewrite URLs when base URL has different host",
 			baseURL:     "https://buildkite.proxy.com/rest/",
 			inputURL:    "https://api.buildkite.com/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
 			expectedURL: "https://buildkite.proxy.com/rest/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
 		},
 		{
-			name:        "should not rewrite URLs when using default base URL",
+			name:        "should not rewrite URLs when base URL matches input URL host and scheme",
 			baseURL:     "https://api.buildkite.com/",
 			inputURL:    "https://api.buildkite.com/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
 			expectedURL: "https://api.buildkite.com/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
 		},
 		{
-			name:        "should not rewrite non-api.buildkite.com URLs",
+			name:        "should rewrite URLs when base URL has different host (any domain)",
 			baseURL:     "https://buildkite.proxy.com/rest/",
 			inputURL:    "https://example.com/some/other/url",
-			expectedURL: "https://example.com/some/other/url",
+			expectedURL: "https://buildkite.proxy.com/rest/some/other/url",
 		},
 		{
 			name:        "should handle base URL without trailing slash",
 			baseURL:     "https://buildkite.proxy.com/rest",
 			inputURL:    "https://api.buildkite.com/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
 			expectedURL: "https://buildkite.proxy.com/rest/v2/organizations/myorg/pipelines/my-pipeline/builds/123/jobs/abc/artifacts/def/download",
+		},
+		{
+			name:        "should handle scheme differences",
+			baseURL:     "http://buildkite.proxy.com/",
+			inputURL:    "https://api.buildkite.com/v2/test",
+			expectedURL: "http://buildkite.proxy.com/v2/test",
+		},
+		{
+			name:        "should not rewrite when hosts and schemes match exactly",
+			baseURL:     "https://api.buildkite.com/",
+			inputURL:    "https://api.buildkite.com/v2/test",
+			expectedURL: "https://api.buildkite.com/v2/test",
+		},
+		{
+			name:        "should handle base URL with complex path prefix",
+			baseURL:     "https://proxy.example.com/buildkite/api/",
+			inputURL:    "https://api.buildkite.com/v2/orgs/test",
+			expectedURL: "https://proxy.example.com/buildkite/api/v2/orgs/test",
+		},
+		{
+			name:        "should return original URL when input URL is malformed",
+			baseURL:     "https://buildkite.proxy.com/",
+			inputURL:    "://malformed-url",
+			expectedURL: "://malformed-url",
 		},
 	}
 
@@ -247,4 +271,41 @@ func TestBuildkiteClientAdapter_URLRewriting(t *testing.T) {
 			assert.Equal(tt.expectedURL, result)
 		})
 	}
+}
+
+func TestBuildkiteClientAdapter_URLRewritingEdgeCases(t *testing.T) {
+	assert := require.New(t)
+
+	// Test edge cases
+	t.Run("should handle nil base URL", func(t *testing.T) {
+		adapter := &BuildkiteClientAdapter{
+			Client: &buildkite.Client{},
+		}
+		result := adapter.rewriteArtifactURL("https://api.buildkite.com/test")
+		assert.Equal("https://api.buildkite.com/test", result)
+	})
+
+	t.Run("should handle empty base URL", func(t *testing.T) {
+		client, err := buildkite.NewOpts(
+			buildkite.WithTokenAuth("fake-token"),
+			buildkite.WithBaseURL(""),
+		)
+		assert.NoError(err)
+
+		adapter := &BuildkiteClientAdapter{Client: client}
+		result := adapter.rewriteArtifactURL("https://api.buildkite.com/test")
+		assert.Equal("https://api.buildkite.com/test", result)
+	})
+
+	t.Run("should handle base URL with only root path", func(t *testing.T) {
+		client, err := buildkite.NewOpts(
+			buildkite.WithTokenAuth("fake-token"),
+			buildkite.WithBaseURL("https://proxy.example.com/"),
+		)
+		assert.NoError(err)
+
+		adapter := &BuildkiteClientAdapter{Client: client}
+		result := adapter.rewriteArtifactURL("https://api.buildkite.com/v2/test")
+		assert.Equal("https://proxy.example.com/v2/test", result)
+	})
 }

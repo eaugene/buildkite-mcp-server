@@ -41,21 +41,36 @@ func (a *BuildkiteClientAdapter) DownloadArtifactByURL(ctx context.Context, url 
 }
 
 // rewriteArtifactURL rewrites artifact URLs to use the configured base URL
-func (a *BuildkiteClientAdapter) rewriteArtifactURL(url string) string {
-	// Get the configured base URL from the client
-	clientBaseURL := a.BaseURL.String()
-
-	// If the client is using a custom base URL (not the default api.buildkite.com)
-	// and the artifact URL is using the default URL, rewrite it
-	if !strings.Contains(clientBaseURL, "api.buildkite.com") && strings.Contains(url, "api.buildkite.com") {
-		// Replace the default API URL with the configured base URL
-		// Remove trailing slash from base URL if present
-		baseURL := strings.TrimSuffix(clientBaseURL, "/")
-		rewrittenURL := strings.Replace(url, "https://api.buildkite.com", baseURL, 1)
-		return rewrittenURL
+func (a *BuildkiteClientAdapter) rewriteArtifactURL(inputURL string) string {
+	// Parse the input URL
+	parsedURL, err := url.Parse(inputURL)
+	if err != nil {
+		// If we can't parse the URL, return it as-is
+		return inputURL
 	}
 
-	return url
+	// Get the configured base URL from the client
+	baseURL := a.BaseURL
+	if baseURL == nil || baseURL.String() == "" {
+		return inputURL
+	}
+
+	// Only rewrite if the base URL is different from the input URL's host and scheme
+	// and the base URL is non-empty
+	if baseURL.Host != parsedURL.Host || baseURL.Scheme != parsedURL.Scheme {
+		// Replace the host and scheme with the configured base URL
+		parsedURL.Scheme = baseURL.Scheme
+		parsedURL.Host = baseURL.Host
+
+		// If the base URL has a path prefix, prepend it to the existing path
+		if baseURL.Path != "" && baseURL.Path != "/" {
+			// Remove trailing slash from base path if present
+			basePath := strings.TrimSuffix(baseURL.Path, "/")
+			parsedURL.Path = basePath + parsedURL.Path
+		}
+	}
+
+	return parsedURL.String()
 }
 
 func ListArtifacts(ctx context.Context, client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
