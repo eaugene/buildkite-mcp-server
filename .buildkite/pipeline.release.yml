@@ -10,14 +10,13 @@ steps:
     artifact_paths:
       - dist/**/*
     plugins:
-      - docker-compose#v5.2.0:
+      - docker-compose#v5.10.0:
           command:
             - .buildkite/release.sh
             - release
             - --clean
             - --split
           config: .buildkite/docker-compose.yaml
-          entrypoint: /bin/sh
           env:
             - GOOS={{matrix}}
           mount-buildkite-agent: true
@@ -41,13 +40,12 @@ steps:
       - artifacts#v1.9.3:
           download:
             - dist/**/*
-      - docker-compose#v5.2.0:
+      - docker-compose#v5.10.0:
           command:
             - .buildkite/release.sh
             - continue
             - --merge
           config: .buildkite/docker-compose.yaml
-          entrypoint: /bin/sh
           env:
             - GITHUB_TOKEN
           mount-buildkite-agent: true
