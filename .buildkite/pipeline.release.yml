@@ -23,6 +23,7 @@ steps:
           run: goreleaser
           shell: false
           tty: true
+          progress: plain
 
   - wait: ~
 
@@ -52,3 +53,4 @@ steps:
           run: goreleaser
           shell: false
           tty: true
+          progress: plain
