@@ -37,6 +37,7 @@ builds:
 kos:
   - repositories:
       - ghcr.io/buildkite/buildkite-mcp-server
+      - docker.io/buildkite/mcp-server
     build: buildkite-mcp-server
     main: ./cmd/buildkite-mcp-server/
     creation_time: "{{.CommitTimestamp}}"
