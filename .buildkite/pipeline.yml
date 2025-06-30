@@ -19,6 +19,7 @@ steps:
             config: .buildkite/docker-compose.yaml
             run: golangci-lint
             tty: true
+            progress: plain
 
     - name: ":go: test"
       artifact_paths:
@@ -33,6 +34,7 @@ steps:
             run: golangci-lint
             tty: true
             mount-buildkite-agent: true
+            progress: plain
 
   - label: ":terminal: build ({{matrix}})"
     depends_on: quality-checks
@@ -58,3 +60,4 @@ steps:
           run: goreleaser
           shell: false
           tty: true
+          progress: plain
