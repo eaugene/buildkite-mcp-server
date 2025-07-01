@@ -37,7 +37,9 @@ steps:
           role-arn: arn:aws:iam::445615400570:role/pipeline-buildkite-buildkite-mcp-server-release
       - aws-ssm#v1.0.0:
           parameters:
-            GITHUB_TOKEN: /pipelines/buildkite/buildkite-cli-release/github-token
+            GITHUB_TOKEN: /pipelines/buildkite/buildkite-mcp-server-release/github-token
+            DOCKERHUB_PASSWORD: /pipelines/buildkite/buildkite-mcp-server-release/dockerhub-password
+            DOCKERHUB_USER: /pipelines/buildkite/buildkite-mcp-server-release/dockerhub-user
       - artifacts#v1.9.3:
           download:
             - dist/**/*
@@ -49,6 +51,8 @@ steps:
           config: .buildkite/docker-compose.yaml
           env:
             - GITHUB_TOKEN
+            - DOCKERHUB_USER
+            - DOCKERHUB_PASSWORD
           mount-buildkite-agent: true
           run: goreleaser
           shell: false
