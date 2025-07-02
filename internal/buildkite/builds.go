@@ -298,7 +298,7 @@ type CreateBuildArgs struct {
 func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
 	return mcp.NewTool("create_build",
 			mcp.WithDescription("Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
 				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
