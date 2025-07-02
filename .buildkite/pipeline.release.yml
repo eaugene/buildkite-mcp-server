@@ -35,6 +35,10 @@ steps:
     plugins:
       - aws-assume-role-with-web-identity:
           role-arn: arn:aws:iam::445615400570:role/pipeline-buildkite-buildkite-mcp-server-release
+          session-tags:
+            - organization_id
+            - organization_slug
+            - pipeline_slug
       - aws-ssm#v1.0.0:
           parameters:
             GITHUB_TOKEN: /pipelines/buildkite/buildkite-mcp-server-release/github-token
