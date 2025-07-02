@@ -286,7 +286,7 @@ type Entry struct {
 }
 
 type CreateBuildArgs struct {
-	Org          string  `json:"org_slug"`
+	OrgSlug      string  `json:"org_slug"`
 	PipelineSlug string  `json:"pipeline_slug"`
 	Commit       string  `json:"commit"`
 	Branch       string  `json:"branch"`
@@ -363,14 +363,12 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			ctx, span := trace.Start(ctx, "buildkite.CreateBuild")
 			defer span.End()
 
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug is required"), nil
 			}
 
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("org_slug is required"), nil
 			}
 
 			createBuild := buildkite.CreateBuild{
@@ -382,11 +380,11 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.String("pipeline_slug", pipelineSlug),
+				attribute.String("org", args.OrgSlug),
+				attribute.String("pipeline_slug", args.PipelineSlug),
 			)
 
-			build, _, err := client.Create(ctx, org, pipelineSlug, createBuild)
+			build, _, err := client.Create(ctx, args.OrgSlug, args.PipelineSlug, createBuild)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
