@@ -286,13 +286,13 @@ type Entry struct {
 }
 
 type CreateBuildArgs struct {
-	Org          string
-	PipelineSlug string
-	Commit       string
-	Branch       string
-	Message      string
-	Environment  []Entry
-	MetaData     []Entry
+	Org          string  `json:"org_slug"`
+	PipelineSlug string  `json:"pipeline_slug"`
+	Commit       string  `json:"commit"`
+	Branch       string  `json:"branch"`
+	Message      string  `json:"message"`
+	Environment  []Entry `json:"environment"`
+	MetaData     []Entry `json:"metadata"`
 }
 
 func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
