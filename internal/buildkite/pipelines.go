@@ -140,16 +140,16 @@ func GetPipeline(ctx context.Context, client PipelinesClient) (tool mcp.Tool, ha
 }
 
 type CreatePipelineArgs struct {
-	OrgSlug                   string
-	Name                      string
-	RepositoryURL             string
-	ClusterID                 string
-	Description               string
-	Configuration             string
-	DefaultBranch             string
-	SkipQueuedBranchBuilds    bool
-	CancelRunningBranchBuilds bool
-	Tags                      []string
+	OrgSlug                   string   `json:"org_slug"`
+	Name                      string   `json:"name"`
+	RepositoryURL             string   `json:"repository_url"`
+	ClusterID                 string   `json:"cluster_id"`
+	Description               string   `json:"description"`
+	Configuration             string   `json:"configuration"`
+	DefaultBranch             string   `json:"default_branch"`
+	SkipQueuedBranchBuilds    bool     `json:"skip_queued_branch_builds"`
+	CancelRunningBranchBuilds bool     `json:"cancel_running_branch_builds"`
+	Tags                      []string `json:"tags"`
 }
 
 func CreatePipeline(ctx context.Context, client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs]) {
@@ -266,16 +266,16 @@ func CreatePipeline(ctx context.Context, client PipelinesClient) (tool mcp.Tool,
 }
 
 type UpdatePipelineArgs struct {
-	OrgSlug                   string
-	PipelineSlug              string
-	Name                      string
-	RepositoryURL             string
-	ClusterID                 string
-	Description               string
-	Configuration             string
-	DefaultBranch             string
-	SkipQueuedBranchBuilds    bool
-	CancelRunningBranchBuilds bool
+	OrgSlug                   string   `json:"org_slug"`
+	PipelineSlug              string   `json:"pipeline_slug"`
+	Name                      string   `json:"name"`
+	RepositoryURL             string   `json:"repository_url"`
+	ClusterID                 string   `json:"cluster_id"`
+	Description               string   `json:"description"`
+	Configuration             string   `json:"configuration"`
+	DefaultBranch             string   `json:"default_branch"`
+	SkipQueuedBranchBuilds    bool     `json:"skip_queued_branch_builds"`
+	CancelRunningBranchBuilds bool     `json:"cancel_running_branch_builds"`
 	Tags                      []string `json:"tags"` // Optional, labels to apply to the pipeline
 }
 
