@@ -156,11 +156,7 @@ steps:
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
-	request := createMCPRequest(t, map[string]any{
-		"org":            "org",
-		"name":           "Test Pipeline",
-		"repository_url": "https://example.com/repo.git",
-	})
+	request := createMCPRequest(t, map[string]any{})
 
 	args := CreatePipelineArgs{
 		OrgSlug:       "org",
@@ -214,10 +210,9 @@ steps:
 	tool, handler := UpdatePipeline(ctx, client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
-	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
-		"pipeline_slug": "test-pipeline",
-	})
+
+	request := createMCPRequest(t, map[string]any{})
+
 	args := UpdatePipelineArgs{
 		OrgSlug:       "org",
 		PipelineSlug:  "test-pipeline",

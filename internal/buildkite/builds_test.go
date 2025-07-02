@@ -417,15 +417,14 @@ func TestCreateBuild(t *testing.T) {
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
-	request := createMCPRequest(t, map[string]any{
-		"org_slug":      "org",
-		"pipeline_slug": "pipeline",
-	})
+	request := createMCPRequest(t, map[string]any{})
 
 	args := CreateBuildArgs{
-		Commit:  "abc123",
-		Message: "Test build",
-		Branch:  "main",
+		OrgSlug:      "org",
+		PipelineSlug: "pipeline",
+		Commit:       "abc123",
+		Message:      "Test build",
+		Branch:       "main",
 		Environment: []Entry{
 			{Key: "ENV_VAR", Value: "value"},
 		},
