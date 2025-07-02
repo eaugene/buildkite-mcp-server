@@ -22,6 +22,20 @@ else
     fi
 fi
 
+# check if GITHUB_USER is set
+if [[ -z "${GITHUB_USER:-}" ]]; then
+    echo "Skipping GHCR login as GITHUB_USER is not set"
+else
+    echo "--- :key: :github: Login to GHCR using ko"
+    echo "$GITHUB_TOKEN" | ko login ghcr.io --username "$GITHUB_USER" --password-stdin
+    if [[ $? -ne 0 ]]; then
+        echo "GitHub login failed"
+        exit 1
+    fi
+fi
+
+echo "--- :goreleaser: Building release with GoReleaser"
+
 if [[ $? -ne 0 ]]; then
     echo "Failed to retrieve GoReleaser Pro key"
     exit 1
