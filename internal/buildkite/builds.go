@@ -321,17 +321,16 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			mcp.WithArray("environment",
 				mcp.Items(
 					map[string]any{
-						"type": "object",
+						"type":     "object",
+						"required": []string{"key", "value"},
 						"properties": map[string]any{
 							"key": map[string]any{
 								"type":        "string",
 								"description": "The name of the environment variable",
-								"required":    true,
 							},
 							"value": map[string]any{
 								"type":        "string",
 								"description": "The value of the environment variable",
-								"required":    true,
 							},
 						},
 					},
@@ -340,17 +339,16 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			mcp.WithArray("metadata",
 				mcp.Items(
 					map[string]any{
-						"type": "object",
+						"type":     "object",
+						"required": []string{"key", "value"},
 						"properties": map[string]any{
 							"key": map[string]any{
 								"type":        "string",
 								"description": "The name of the environment variable",
-								"required":    true,
 							},
 							"value": map[string]any{
 								"type":        "string",
 								"description": "The value of the environment variable",
-								"required":    true,
 							},
 						},
 					},
