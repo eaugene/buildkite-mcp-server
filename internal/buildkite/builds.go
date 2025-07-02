@@ -286,19 +286,19 @@ type Entry struct {
 }
 
 type CreateBuildArgs struct {
-	Org          string
-	PipelineSlug string
-	Commit       string
-	Branch       string
-	Message      string
-	Environment  []Entry
-	MetaData     []Entry
+	OrgSlug      string  `json:"org_slug"`
+	PipelineSlug string  `json:"pipeline_slug"`
+	Commit       string  `json:"commit"`
+	Branch       string  `json:"branch"`
+	Message      string  `json:"message"`
+	Environment  []Entry `json:"environment"`
+	MetaData     []Entry `json:"metadata"`
 }
 
 func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
 	return mcp.NewTool("create_build",
 			mcp.WithDescription("Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
 				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
@@ -363,16 +363,6 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			ctx, span := trace.Start(ctx, "buildkite.CreateBuild")
 			defer span.End()
 
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-
 			createBuild := buildkite.CreateBuild{
 				Commit:   args.Commit,
 				Branch:   args.Branch,
@@ -382,11 +372,11 @@ func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handl
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.String("pipeline_slug", pipelineSlug),
+				attribute.String("org", args.OrgSlug),
+				attribute.String("pipeline_slug", args.PipelineSlug),
 			)
 
-			build, _, err := client.Create(ctx, org, pipelineSlug, createBuild)
+			build, _, err := client.Create(ctx, args.OrgSlug, args.PipelineSlug, createBuild)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {

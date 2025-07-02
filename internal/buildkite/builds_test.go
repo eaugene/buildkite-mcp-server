@@ -393,6 +393,13 @@ func TestCreateBuild(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{
 		CreateFunc: func(ctx context.Context, org string, pipeline string, b buildkite.CreateBuild) (buildkite.Build, *buildkite.Response, error) {
+
+			// Validate required fields
+			assert.Equal(org, "org")
+			assert.Equal(pipeline, "pipeline")
+			assert.Equal(b.Commit, "abc123")
+			assert.Equal(b.Message, "Test build")
+
 			// Return created build
 			return buildkite.Build{
 					ID:        "123",
@@ -417,15 +424,14 @@ func TestCreateBuild(t *testing.T) {
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
-	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
-		"pipeline_slug": "pipeline",
-	})
+	request := createMCPRequest(t, map[string]any{})
 
 	args := CreateBuildArgs{
-		Commit:  "abc123",
-		Message: "Test build",
-		Branch:  "main",
+		OrgSlug:      "org",
+		PipelineSlug: "pipeline",
+		Commit:       "abc123",
+		Message:      "Test build",
+		Branch:       "main",
 		Environment: []Entry{
 			{Key: "ENV_VAR", Value: "value"},
 		},

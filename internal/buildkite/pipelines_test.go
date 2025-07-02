@@ -135,13 +135,19 @@ steps:
 	client := &MockPipelinesClient{
 		CreateFunc: func(ctx context.Context, org string, p buildkite.CreatePipeline) (buildkite.Pipeline, *buildkite.Response, error) {
 
+			// validate required fields
+			assert.Equal("org", org)
+			assert.Equal("cluster-123", p.ClusterID)
+			assert.Equal("Test Pipeline", p.Name)
+			assert.Equal("https://example.com/repo.git", p.Repository)
+
 			assert.Equal(testPipelineDefinition, p.Configuration)
 
 			return buildkite.Pipeline{
 					ID:        "123",
 					Slug:      "test-pipeline",
 					Name:      "Test Pipeline",
-					ClusterID: "abc-123",
+					ClusterID: "cluster-123",
 					CreatedAt: &buildkite.Timestamp{},
 					Tags:      []string{"tag1", "tag2"},
 				}, &buildkite.Response{
@@ -156,16 +162,12 @@ steps:
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
-	request := createMCPRequest(t, map[string]any{
-		"org":            "org",
-		"name":           "Test Pipeline",
-		"repository_url": "https://example.com/repo.git",
-	})
+	request := createMCPRequest(t, map[string]any{})
 
 	args := CreatePipelineArgs{
 		OrgSlug:       "org",
 		Name:          "Test Pipeline",
-		ClusterID:     "abc-123",
+		ClusterID:     "cluster-123",
 		RepositoryURL: "https://example.com/repo.git",
 		Description:   "A test pipeline",
 		Configuration: testPipelineDefinition,
@@ -175,7 +177,7 @@ steps:
 	result, err := handler(ctx, request, args)
 	assert.NoError(err)
 	textContent := getTextResult(t, result)
-	assert.Equal(`{"id":"123","name":"Test Pipeline","slug":"test-pipeline","created_at":"0001-01-01T00:00:00Z","skip_queued_branch_builds":false,"cancel_running_branch_builds":false,"cluster_id":"abc-123","tags":["tag1","tag2"],"provider":{"id":"","webhook_url":"","settings":null}}`, textContent.Text)
+	assert.Equal(`{"id":"123","name":"Test Pipeline","slug":"test-pipeline","created_at":"0001-01-01T00:00:00Z","skip_queued_branch_builds":false,"cancel_running_branch_builds":false,"cluster_id":"cluster-123","tags":["tag1","tag2"],"provider":{"id":"","webhook_url":"","settings":null}}`, textContent.Text)
 }
 
 func TestUpdatePipeline(t *testing.T) {
@@ -193,6 +195,10 @@ steps:
 	ctx := context.Background()
 	client := &MockPipelinesClient{
 		UpdateFunc: func(ctx context.Context, org string, pipeline string, p buildkite.UpdatePipeline) (buildkite.Pipeline, *buildkite.Response, error) {
+
+			// validate required fields
+			assert.Equal("org", org)
+			assert.Equal("test-pipeline", pipeline)
 
 			assert.Equal(testPipelineDefinition, p.Configuration)
 
@@ -214,10 +220,9 @@ steps:
 	tool, handler := UpdatePipeline(ctx, client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
-	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
-		"pipeline_slug": "test-pipeline",
-	})
+
+	request := createMCPRequest(t, map[string]any{})
+
 	args := UpdatePipelineArgs{
 		OrgSlug:       "org",
 		PipelineSlug:  "test-pipeline",
