@@ -109,6 +109,8 @@ make build    # uses goreleaser (snapshot)
 <details>
 <summary>Claude Desktop</summary>
 
+Docker (recommended):
+
 ```jsonc
 {
   "mcpServers": {
@@ -139,12 +141,26 @@ Local binary:
 ```
 </details>
 
-## Goose
+<details>
+<summary>Claude Code</summary>
 
-- For Docker with [Goose](https://block.github.io/goose/) (recommended):
+Docker (recommended):
+
+```
+claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+```
+
+Local binary:
+
+```
+claude mcp add buildkite --env BUILDKITE_API_TOKEN=bkua_xxxxxxxx -- buildkite-mcp-server stdio
+```
+</details>
 
 <details>
-<summary>Goose</summary>
+<summary><a href="https://block.github.io/goose/">Goose</a></summary>
+
+Docker (recommended):
 
 ```yaml
 extensions:
@@ -157,7 +173,8 @@ extensions:
     type: stdio
     timeout: 300
 ```
-Local:
+
+Local binary:
 
 ```yaml
 extensions:
