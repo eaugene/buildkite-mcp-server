@@ -114,6 +114,43 @@ make build    # uses goreleaser (snapshot)
 <!-- Keep this alphabetical -->
 
 <details>
+<summary><a href="https://ampcode.com">Amp</a></summary>
+
+Docker (recommended):
+
+```jsonc
+# ~/.config/amp/settings.json
+{
+  "amp.mcpServers": {
+    "buildkite": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+      ],
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+    }
+  }
+}
+```
+
+Local binary:
+
+```jsonc
+# ~/.config/amp/settings.json
+{
+  "amp.mcpServers": {
+    "buildkite": {
+      "command": "buildkite-mcp-server",
+      "args": ["stdio"],
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+    }
+  }
+}
+```
+</details>
+
+<details>
 <summary>Claude Code</summary>
 
 Docker (recommended):
