@@ -12,7 +12,7 @@
 
 ```bash
 # Run via Docker with the token from above
-docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
 [![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.png)](https://cursor.com/install-mcp?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8iLCJlbnYiOnsiQlVJTERLSVRFX0FQSV9UT0tFTiI6ImJrdWFfeHh4eHh4eHgifX0%3D)
@@ -84,7 +84,7 @@ docker pull ghcr.io/buildkite/buildkite-mcp-server
 Run:
 
 ```bash
-docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
 ### 2. Pre-built binary
