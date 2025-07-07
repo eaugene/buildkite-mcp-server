@@ -89,6 +89,12 @@ docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkit
 
 Download the latest release from [GitHub Releases](https://github.com/buildkite/buildkite-mcp-server/releases). Binaries are fully-static and require no libc.
 
+If you're on macOS, you can use [Homebrew](https://brew.sh):
+
+```sh
+brew install buildkite/buildkite/buildkite-mcp-server
+```
+
 ### 3. Build from source
 
 ```bash
