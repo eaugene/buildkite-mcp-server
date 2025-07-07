@@ -111,6 +111,24 @@ make build    # uses goreleaser (snapshot)
 
 ## ⚙️ Configuration & Usage
 
+<!-- Keep this alphabetical -->
+
+<details>
+<summary>Claude Code</summary>
+
+Docker (recommended):
+
+```
+claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+```
+
+Local binary:
+
+```
+claude mcp add buildkite --env BUILDKITE_API_TOKEN=bkua_xxxxxxxx -- buildkite-mcp-server stdio
+```
+</details>
+
 <details>
 <summary>Claude Desktop</summary>
 
@@ -143,22 +161,6 @@ Local binary:
     }
   }
 }
-```
-</details>
-
-<details>
-<summary>Claude Code</summary>
-
-Docker (recommended):
-
-```
-claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
-```
-
-Local binary:
-
-```
-claude mcp add buildkite --env BUILDKITE_API_TOKEN=bkua_xxxxxxxx -- buildkite-mcp-server stdio
 ```
 </details>
 
