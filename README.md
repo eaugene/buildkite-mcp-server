@@ -8,9 +8,11 @@
 
 ## ⚡ TL;DR Quick-start
 
+[Create a Buildkite API Token](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_clusters&scopes[]=read_pipelines&scopes[]=read_builds&scopes[]=read_build_logs&scopes[]=read_user&scopes[]=read_organizations&scopes[]=read_artifacts&scopes[]=read_suites)
+
 ```bash
-# Requires Docker and a Buildkite API token (see scopes below)
-docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+# Run via Docker with the token from above
+docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
 [![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.png)](https://cursor.com/install-mcp?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8iLCJlbnYiOnsiQlVJTERLSVRFX0FQSV9UT0tFTiI6ImJrdWFfeHh4eHh4eHgifX0%3D)
@@ -19,16 +21,15 @@ docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkit
 
 ## 🗂️ Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [API Token Scopes](#api-token-scopes)
-- [Installation](#installation)
-- [Configuration & Usage](#configuration--usage)
-  - [Editors & Tools](#editors--tools)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Security](#security)
-- [Contributing](#contributing)
-- [License](#license)
+- [Prerequisites](#️-prerequisites)
+- [API Token Scopes](#-api-token-scopes)
+- [Installation](#-installation)
+- [Configuration & Usage](#️-configuration--usage)
+- [Features](#️-tools--features)
+- [Screenshots](#-screenshots)
+- [Security](#-security)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -83,12 +84,18 @@ docker pull ghcr.io/buildkite/buildkite-mcp-server
 Run:
 
 ```bash
-docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
 ### 2. Pre-built binary
 
 Download the latest release from [GitHub Releases](https://github.com/buildkite/buildkite-mcp-server/releases). Binaries are fully-static and require no libc.
+
+If you're on macOS, you can use [Homebrew](https://brew.sh):
+
+```sh
+brew install buildkite/buildkite/buildkite-mcp-server
+```
 
 ### 3. Build from source
 
@@ -104,7 +111,60 @@ make build    # uses goreleaser (snapshot)
 
 ## ⚙️ Configuration & Usage
 
-### Editors & Tools
+<!-- Keep this alphabetical -->
+
+<details>
+<summary><a href="https://ampcode.com">Amp</a></summary>
+
+Docker (recommended):
+
+```jsonc
+# ~/.config/amp/settings.json
+{
+  "amp.mcpServers": {
+    "buildkite": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+      ],
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+    }
+  }
+}
+```
+
+Local binary:
+
+```jsonc
+# ~/.config/amp/settings.json
+{
+  "amp.mcpServers": {
+    "buildkite": {
+      "command": "buildkite-mcp-server",
+      "args": ["stdio"],
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Claude Code</summary>
+
+Docker (recommended):
+
+```
+claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+```
+
+Local binary:
+
+```
+claude mcp add buildkite --env BUILDKITE_API_TOKEN=bkua_xxxxxxxx -- buildkite-mcp-server stdio
+```
+</details>
 
 <details>
 <summary>Claude Desktop</summary>
@@ -138,22 +198,6 @@ Local binary:
     }
   }
 }
-```
-</details>
-
-<details>
-<summary>Claude Code</summary>
-
-Docker (recommended):
-
-```
-claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
-```
-
-Local binary:
-
-```
-claude mcp add buildkite --env BUILDKITE_API_TOKEN=bkua_xxxxxxxx -- buildkite-mcp-server stdio
 ```
 </details>
 
@@ -248,12 +292,12 @@ Local binary:
 
 </details>
 
-## Zed
-
-- There is a Zed [editor extension](https://zed.dev) available in the [official extension gallery](https://zed.dev/extensions?query=buildkite). During installation it will ask for an API token which will be added to your settings, or you can manually configure:
-
 <details>
 <summary>Zed</summary>
+
+There is a Zed [editor extension](https://zed.dev) available in the [official extension gallery](https://zed.dev/extensions?query=buildkite). During installation it will ask for an API token which will be added to your settings.
+
+Or you can manually configure:
 
 ```jsonc
 // ~/.config/zed/settings.json
