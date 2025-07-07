@@ -23,7 +23,6 @@ docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkit
 - [API Token Scopes](#-api-token-scopes)
 - [Installation](#-installation)
 - [Configuration & Usage](#️-configuration--usage)
-  - [Editors & Tools](#editors--tools)
 - [Features](#️-tools--features)
 - [Screenshots](#-screenshots)
 - [Security](#-security)
