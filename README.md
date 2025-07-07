@@ -104,8 +104,6 @@ make build    # uses goreleaser (snapshot)
 
 ## ⚙️ Configuration & Usage
 
-### Editors & Tools
-
 <details>
 <summary>Claude Desktop</summary>
 
@@ -248,12 +246,12 @@ Local binary:
 
 </details>
 
-## Zed
-
-- There is a Zed [editor extension](https://zed.dev) available in the [official extension gallery](https://zed.dev/extensions?query=buildkite). During installation it will ask for an API token which will be added to your settings, or you can manually configure:
-
 <details>
 <summary>Zed</summary>
+
+There is a Zed [editor extension](https://zed.dev) available in the [official extension gallery](https://zed.dev/extensions?query=buildkite). During installation it will ask for an API token which will be added to your settings.
+
+Or you can manually configure:
 
 ```jsonc
 // ~/.config/zed/settings.json
