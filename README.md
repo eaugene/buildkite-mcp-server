@@ -8,8 +8,10 @@
 
 ## ⚡ TL;DR Quick-start
 
+[Create a Buildkite API Token](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_clusters&scopes[]=read_pipelines&scopes[]=read_builds&scopes[]=read_build_logs&scopes[]=read_user&scopes[]=read_organizations&scopes[]=read_artifacts&scopes[]=read_suites)
+
 ```bash
-# Requires Docker and a Buildkite API token (see scopes below)
+# Run via Docker with the token from above
 docker run -it --rm -e BUILDKITE_API_TOKEN=BKUA_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
