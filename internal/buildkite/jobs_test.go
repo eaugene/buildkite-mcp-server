@@ -34,7 +34,7 @@ func TestGetJobs(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -94,7 +94,7 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -181,7 +181,7 @@ func TestGetJobsMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -254,7 +254,7 @@ func TestGetJobsPagination(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -371,7 +371,7 @@ func TestGetJobsAgentInfo(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -460,7 +460,7 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(ctx, client)
+	tool, handler := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -493,7 +493,7 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 func TestGetJobLogs(t *testing.T) {
 	// Test the tool definition
 	t.Run("ToolDefinition", func(t *testing.T) {
-		tool, _ := GetJobLogs(context.Background(), nil)
+		tool, _ := GetJobLogs(nil)
 
 		assert.Equal(t, "get_job_logs", tool.Name)
 		assert.Contains(t, tool.Description, "Get the log output and metadata for a specific job, including content, size, and header timestamps")
@@ -501,7 +501,7 @@ func TestGetJobLogs(t *testing.T) {
 
 	t.Run("MissingParameters", func(t *testing.T) {
 		assert := require.New(t)
-		_, handler := GetJobLogs(context.Background(), &buildkite.Client{})
+		_, handler := GetJobLogs(&buildkite.Client{})
 
 		// Test missing org parameter
 		req := createMCPRequest(t, map[string]any{

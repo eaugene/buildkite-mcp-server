@@ -48,7 +48,7 @@ func TestListClusters(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListClusters(ctx, client)
+	tool, handler := ListClusters(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -79,7 +79,7 @@ func TestGetCluster(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetCluster(ctx, client)
+	tool, handler := GetCluster(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

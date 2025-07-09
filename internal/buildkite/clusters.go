@@ -17,7 +17,7 @@ type ClustersClient interface {
 	Get(ctx context.Context, org, id string) (buildkite.Cluster, *buildkite.Response, error)
 }
 
-func ListClusters(ctx context.Context, client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_clusters",
 			mcp.WithDescription("List all clusters in an organization with their names, descriptions, default queues, and creation details"),
 			mcp.WithString("org",
@@ -78,7 +78,7 @@ func ListClusters(ctx context.Context, client ClustersClient) (tool mcp.Tool, ha
 		}
 }
 
-func GetCluster(ctx context.Context, client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_cluster",
 			mcp.WithDescription("Get detailed information about a specific cluster including its name, description, default queue, and configuration"),
 			mcp.WithString("org",

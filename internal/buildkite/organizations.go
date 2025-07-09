@@ -15,7 +15,7 @@ type OrganizationsClient interface {
 	List(ctx context.Context, options *buildkite.OrganizationListOptions) ([]buildkite.Organization, *buildkite.Response, error)
 }
 
-func UserTokenOrganization(ctx context.Context, client OrganizationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("user_token_organization",
 			mcp.WithDescription("Get the organization associated with the user token used for this request"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{

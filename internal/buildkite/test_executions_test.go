@@ -59,7 +59,7 @@ func TestGetFailedExecutions(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetFailedTestExecutions(ctx, mockClient)
+	tool, handler := GetFailedTestExecutions(mockClient)
 
 	// Test tool properties
 	assert.Equal("get_failed_executions", tool.Name)
@@ -97,7 +97,7 @@ func TestGetFailedExecutionsMissingOrg(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestExecutionsClient{}
 
-	_, handler := GetFailedTestExecutions(ctx, mockClient)
+	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"test_suite_slug": "suite1",
@@ -116,7 +116,7 @@ func TestGetFailedExecutionsMissingTestSuiteSlug(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestExecutionsClient{}
 
-	_, handler := GetFailedTestExecutions(ctx, mockClient)
+	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":    "org",
@@ -135,7 +135,7 @@ func TestGetFailedExecutionsMissingRunID(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestExecutionsClient{}
 
-	_, handler := GetFailedTestExecutions(ctx, mockClient)
+	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -158,7 +158,7 @@ func TestGetFailedExecutionsWithError(t *testing.T) {
 		},
 	}
 
-	_, handler := GetFailedTestExecutions(ctx, mockClient)
+	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -187,7 +187,7 @@ func TestGetFailedExecutionsHTTPError(t *testing.T) {
 		},
 	}
 
-	_, handler := GetFailedTestExecutions(ctx, mockClient)
+	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -267,7 +267,7 @@ func TestGetFailedExecutionsPagination(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetFailedTestExecutions(ctx, mockClient)
+	tool, handler := GetFailedTestExecutions(mockClient)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -390,7 +390,7 @@ func TestGetFailedExecutionsLargePage(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetFailedTestExecutions(ctx, mockClient)
+	tool, handler := GetFailedTestExecutions(mockClient)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

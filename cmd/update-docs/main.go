@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -21,13 +20,11 @@ const (
 )
 
 func main() {
-	ctx := context.Background()
-
 	// Create a dummy client to initialize tools
 	client := &gobuildkite.Client{}
 
 	// Collect all tools
-	tools := commands.BuildkiteTools(ctx, client)
+	tools := commands.BuildkiteTools(client)
 
 	// Generate markdown documentation for the tools
 	toolsDocs := generateToolsDocs(tools)

@@ -27,24 +27,22 @@ var _ TestsClient = (*MockTestsClient)(nil)
 func TestGetTest(t *testing.T) {
 	assert := require.New(t)
 
-	ctx := context.Background()
-
 	client := &MockTestsClient{
 		GetFunc: func(ctx context.Context, org, slug, testID string) (buildkite.Test, *buildkite.Response, error) {
 			return buildkite.Test{
-				ID:       "test-123",
-				Name:     "Example Test",
-				Location: "spec/example_test.rb",
-			}, &buildkite.Response{
-				Response: &http.Response{
-					StatusCode: 200,
-					Body:       io.NopCloser(strings.NewReader(`{"id": "test-123"}`)),
-				},
-			}, nil
+					ID:       "test-123",
+					Name:     "Example Test",
+					Location: "spec/example_test.rb",
+				}, &buildkite.Response{
+					Response: &http.Response{
+						StatusCode: 200,
+						Body:       io.NopCloser(strings.NewReader(`{"id": "test-123"}`)),
+					},
+				}, nil
 		},
 	}
 
-	tool, handler := GetTest(ctx, client)
+	tool, handler := GetTest(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

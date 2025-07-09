@@ -17,7 +17,7 @@ type ClusterQueuesClient interface {
 	Get(ctx context.Context, org, clusterID, queueID string) (buildkite.ClusterQueue, *buildkite.Response, error)
 }
 
-func ListClusterQueues(ctx context.Context, client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_cluster_queues",
 			mcp.WithDescription("List all queues in a cluster with their keys, descriptions, dispatch status, and agent configuration"),
 			mcp.WithString("org",
@@ -88,7 +88,7 @@ func ListClusterQueues(ctx context.Context, client ClusterQueuesClient) (tool mc
 		}
 }
 
-func GetClusterQueue(ctx context.Context, client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_cluster_queue",
 			mcp.WithDescription("Get detailed information about a specific queue including its key, description, dispatch status, and hosted agent configuration"),
 			mcp.WithString("org",

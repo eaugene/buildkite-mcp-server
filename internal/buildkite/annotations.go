@@ -20,7 +20,7 @@ type AnnotationsClient interface {
 }
 
 // ListAnnotations returns an MCP tool + handler pair that lists annotations for a build.
-func ListAnnotations(ctx context.Context, client AnnotationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_annotations",
 			mcp.WithDescription("List all annotations for a build, including their context, style (success/info/warning/error), rendered HTML content, and creation timestamps"),
 			mcp.WithString("org",
