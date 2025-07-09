@@ -15,7 +15,7 @@ type AccessTokenClient interface {
 	Get(ctx context.Context) (buildkite.AccessToken, *buildkite.Response, error)
 }
 
-func AccessToken(ctx context.Context, client AccessTokenClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func AccessToken(client AccessTokenClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("access_token",
 			mcp.WithDescription("Get information about the current API access token including its scopes and UUID"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{

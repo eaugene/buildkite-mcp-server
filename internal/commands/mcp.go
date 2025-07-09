@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"context"
-
 	"github.com/buildkite/buildkite-mcp-server/internal/buildkite"
 	"github.com/buildkite/buildkite-mcp-server/internal/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
@@ -15,7 +13,7 @@ func fromTypeTool[T any](tool mcp.Tool, handler mcp.TypedToolHandlerFunc[T]) (mc
 	return tool, mcp.NewTypedToolHandler(handler)
 }
 
-func NewMCPServer(ctx context.Context, globals *Globals) *server.MCPServer {
+func NewMCPServer(globals *Globals) *server.MCPServer {
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
 		globals.Version,
@@ -24,12 +22,9 @@ func NewMCPServer(ctx context.Context, globals *Globals) *server.MCPServer {
 		server.WithHooks(trace.NewHooks()),
 		server.WithLogging())
 
-	// add the logger to the context
-	ctx = globals.Logger.WithContext(ctx)
+	log.Info().Str("version", globals.Version).Msg("Starting Buildkite MCP server")
 
-	log.Ctx(ctx).Info().Str("version", globals.Version).Msg("Starting Buildkite MCP server")
-
-	s.AddTools(BuildkiteTools(ctx, globals.Client)...)
+	s.AddTools(BuildkiteTools(globals.Client)...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
@@ -38,7 +33,7 @@ func NewMCPServer(ctx context.Context, globals *Globals) *server.MCPServer {
 	return s
 }
 
-func BuildkiteTools(ctx context.Context, client *gobuildkite.Client) []server.ServerTool {
+func BuildkiteTools(client *gobuildkite.Client) []server.ServerTool {
 	// Create a client adapter so that we can use a mock or true client
 	clientAdapter := &buildkite.BuildkiteClientAdapter{Client: client}
 
@@ -49,58 +44,58 @@ func BuildkiteTools(ctx context.Context, client *gobuildkite.Client) []server.Se
 	}
 
 	// Cluster tools
-	tools = addTool(buildkite.GetCluster(ctx, client.Clusters))
-	tools = addTool(buildkite.ListClusters(ctx, client.Clusters))
+	tools = addTool(buildkite.GetCluster(client.Clusters))
+	tools = addTool(buildkite.ListClusters(client.Clusters))
 
 	// Queue tools
-	tools = addTool(buildkite.GetClusterQueue(ctx, client.ClusterQueues))
-	tools = addTool(buildkite.ListClusterQueues(ctx, client.ClusterQueues))
+	tools = addTool(buildkite.GetClusterQueue(client.ClusterQueues))
+	tools = addTool(buildkite.ListClusterQueues(client.ClusterQueues))
 
 	// Pipeline tools
-	tools = addTool(buildkite.GetPipeline(ctx, client.Pipelines))
-	tools = addTool(buildkite.ListPipelines(ctx, client.Pipelines))
+	tools = addTool(buildkite.GetPipeline(client.Pipelines))
+	tools = addTool(buildkite.ListPipelines(client.Pipelines))
 	tools = addTool(
-		fromTypeTool(buildkite.CreatePipeline(ctx, client.Pipelines)),
+		fromTypeTool(buildkite.CreatePipeline(client.Pipelines)),
 	)
 	tools = addTool(
-		fromTypeTool(buildkite.UpdatePipeline(ctx, client.Pipelines)),
+		fromTypeTool(buildkite.UpdatePipeline(client.Pipelines)),
 	)
 
 	// Build tools
-	tools = addTool(buildkite.ListBuilds(ctx, client.Builds))
-	tools = addTool(buildkite.GetBuild(ctx, client.Builds))
-	tools = addTool(buildkite.GetBuildTestEngineRuns(ctx, client.Builds))
+	tools = addTool(buildkite.ListBuilds(client.Builds))
+	tools = addTool(buildkite.GetBuild(client.Builds))
+	tools = addTool(buildkite.GetBuildTestEngineRuns(client.Builds))
 	tools = addTool(
-		fromTypeTool(buildkite.CreateBuild(ctx, client.Builds)),
+		fromTypeTool(buildkite.CreateBuild(client.Builds)),
 	)
 
 	// User tools
-	tools = addTool(buildkite.CurrentUser(ctx, client.User))
-	tools = addTool(buildkite.UserTokenOrganization(ctx, client.Organizations))
+	tools = addTool(buildkite.CurrentUser(client.User))
+	tools = addTool(buildkite.UserTokenOrganization(client.Organizations))
 
 	// Job tools
-	tools = addTool(buildkite.GetJobs(ctx, client.Builds))
-	tools = addTool(buildkite.GetJobLogs(ctx, client))
+	tools = addTool(buildkite.GetJobs(client.Builds))
+	tools = addTool(buildkite.GetJobLogs(client))
 
 	// Artifacts tools
-	tools = addTool(buildkite.ListArtifacts(ctx, clientAdapter))
-	tools = addTool(buildkite.GetArtifact(ctx, clientAdapter))
+	tools = addTool(buildkite.ListArtifacts(clientAdapter))
+	tools = addTool(buildkite.GetArtifact(clientAdapter))
 
 	// Annotation tools
-	tools = addTool(buildkite.ListAnnotations(ctx, client.Annotations))
+	tools = addTool(buildkite.ListAnnotations(client.Annotations))
 
 	// Test Run tools
-	tools = addTool(buildkite.ListTestRuns(ctx, client.TestRuns))
-	tools = addTool(buildkite.GetTestRun(ctx, client.TestRuns))
+	tools = addTool(buildkite.ListTestRuns(client.TestRuns))
+	tools = addTool(buildkite.GetTestRun(client.TestRuns))
 
 	// Test Execution tools
-	tools = addTool(buildkite.GetFailedTestExecutions(ctx, client.TestRuns))
+	tools = addTool(buildkite.GetFailedTestExecutions(client.TestRuns))
 
 	// Test tools
-	tools = addTool(buildkite.GetTest(ctx, client.Tests))
+	tools = addTool(buildkite.GetTest(client.Tests))
 
 	// Other tools
-	tools = addTool(buildkite.AccessToken(ctx, client.AccessTokens))
+	tools = addTool(buildkite.AccessToken(client.AccessTokens))
 
 	return tools
 }

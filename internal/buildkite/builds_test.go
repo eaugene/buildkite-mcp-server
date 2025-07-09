@@ -59,7 +59,7 @@ func TestGetBuildDefault(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuild(ctx, client)
+	tool, handler := GetBuild(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -102,7 +102,7 @@ func TestGetBuildWithJobSummary(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuild(ctx, client)
+	tool, handler := GetBuild(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -145,7 +145,7 @@ func TestListBuilds(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(ctx, client)
+	tool, handler := ListBuilds(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -190,7 +190,7 @@ func TestListBuildsWithCustomPagination(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(ctx, client)
+	tool, handler := ListBuilds(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -234,7 +234,7 @@ func TestListBuildsWithBranchFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(ctx, client)
+	tool, handler := ListBuilds(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -290,7 +290,7 @@ func TestGetBuildTestEngineRuns(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuildTestEngineRuns(ctx, client)
+	tool, handler := GetBuildTestEngineRuns(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -333,7 +333,7 @@ func TestGetBuildTestEngineRunsNoBuildTestEngine(t *testing.T) {
 		},
 	}
 
-	_, handler := GetBuildTestEngineRuns(ctx, client)
+	_, handler := GetBuildTestEngineRuns(client)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":           "org",
@@ -354,7 +354,7 @@ func TestGetBuildTestEngineRunsMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	_, handler := GetBuildTestEngineRuns(ctx, client)
+	_, handler := GetBuildTestEngineRuns(client)
 
 	// Test missing org parameter
 	request := createMCPRequest(t, map[string]any{
@@ -420,7 +420,7 @@ func TestCreateBuild(t *testing.T) {
 		},
 	}
 
-	tool, handler := CreateBuild(ctx, client)
+	tool, handler := CreateBuild(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

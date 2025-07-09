@@ -21,7 +21,7 @@ type PipelinesClient interface {
 	Update(ctx context.Context, org, pipelineSlug string, p buildkite.UpdatePipeline) (buildkite.Pipeline, *buildkite.Response, error)
 }
 
-func ListPipelines(ctx context.Context, client PipelinesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_pipelines",
 			mcp.WithDescription("List all pipelines in an organization with their basic details, build counts, and current status"),
 			mcp.WithString("org",
@@ -83,7 +83,7 @@ func ListPipelines(ctx context.Context, client PipelinesClient) (tool mcp.Tool, 
 		}
 }
 
-func GetPipeline(ctx context.Context, client PipelinesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_pipeline",
 			mcp.WithDescription("Get detailed information about a specific pipeline including its configuration, steps, environment variables, and build statistics"),
 			mcp.WithString("org",
@@ -152,7 +152,7 @@ type CreatePipelineArgs struct {
 	Tags                      []string `json:"tags"`
 }
 
-func CreatePipeline(ctx context.Context, client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs]) {
+func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs]) {
 	return mcp.NewTool("create_pipeline",
 			mcp.WithDescription("Set up a new CI/CD pipeline in Buildkite with YAML configuration, repository connection, and cluster assignment"),
 			mcp.WithString("org_slug",
@@ -279,7 +279,7 @@ type UpdatePipelineArgs struct {
 	Tags                      []string `json:"tags"` // Optional, labels to apply to the pipeline
 }
 
-func UpdatePipeline(ctx context.Context, client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[UpdatePipelineArgs]) {
+func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[UpdatePipelineArgs]) {
 	return mcp.NewTool("update_pipeline",
 			mcp.WithDescription("Modify an existing Buildkite pipeline's configuration, repository, settings, or metadata"),
 			mcp.WithString("org_slug",

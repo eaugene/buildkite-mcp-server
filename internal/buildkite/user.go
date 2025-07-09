@@ -15,7 +15,7 @@ type UserClient interface {
 	CurrentUser(ctx context.Context) (buildkite.User, *buildkite.Response, error)
 }
 
-func CurrentUser(ctx context.Context, client UserClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func CurrentUser(client UserClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("current_user",
 			mcp.WithDescription("Get details about the user account that owns the API token, including name, email, avatar, and account creation date"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{

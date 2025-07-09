@@ -67,7 +67,7 @@ func TestListPipelines(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListPipelines(ctx, client)
+	tool, handler := ListPipelines(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -101,7 +101,7 @@ func TestGetPipeline(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetPipeline(ctx, client)
+	tool, handler := GetPipeline(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -158,7 +158,7 @@ steps:
 		},
 	}
 
-	tool, handler := CreatePipeline(ctx, client)
+	tool, handler := CreatePipeline(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -217,7 +217,7 @@ steps:
 		},
 	}
 
-	tool, handler := UpdatePipeline(ctx, client)
+	tool, handler := UpdatePipeline(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

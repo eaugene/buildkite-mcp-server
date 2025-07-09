@@ -16,7 +16,7 @@ func (c *ToolsCmd) Run(ctx context.Context, globals *Globals) error {
 	client := &gobuildkite.Client{}
 
 	// Collect all tools
-	tools := BuildkiteTools(ctx, client)
+	tools := BuildkiteTools(client)
 
 	for _, tool := range tools {
 

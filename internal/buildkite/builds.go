@@ -31,7 +31,7 @@ type BuildWithSummary struct {
 	JobSummary *JobSummary `json:"job_summary"`
 }
 
-func ListBuilds(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListBuilds(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_builds",
 			mcp.WithDescription("List all builds for a pipeline with their status, commit information, and metadata"),
 			mcp.WithString("org",
@@ -117,7 +117,7 @@ func ListBuilds(ctx context.Context, client BuildsClient) (tool mcp.Tool, handle
 		}
 }
 
-func GetBuildTestEngineRuns(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_build_test_engine_runs",
 			mcp.WithDescription("Get test engine runs data for a specific build in Buildkite. This can be used to look up Test Runs."),
 			mcp.WithString("org",
@@ -191,7 +191,7 @@ func GetBuildTestEngineRuns(ctx context.Context, client BuildsClient) (tool mcp.
 		}
 }
 
-func GetBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetBuild(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_build",
 			mcp.WithDescription("Get detailed information about a specific build including its jobs, timing, and execution details"),
 			mcp.WithString("org",
@@ -295,7 +295,7 @@ type CreateBuildArgs struct {
 	MetaData     []Entry `json:"metadata"`
 }
 
-func CreateBuild(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
+func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
 	return mcp.NewTool("create_build",
 			mcp.WithDescription("Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information"),
 			mcp.WithString("org_slug",

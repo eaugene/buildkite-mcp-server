@@ -74,7 +74,7 @@ func TestListTestRuns(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListTestRuns(ctx, mockClient)
+	tool, handler := ListTestRuns(mockClient)
 
 	// Test tool properties
 	assert.Equal("list_test_runs", tool.Name)
@@ -112,7 +112,7 @@ func TestListTestRunsWithError(t *testing.T) {
 		},
 	}
 
-	_, handler := ListTestRuns(ctx, mockClient)
+	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -131,7 +131,7 @@ func TestListTestRunsMissingOrg(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{}
 
-	_, handler := ListTestRuns(ctx, mockClient)
+	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"test_suite_slug": "suite1",
@@ -149,7 +149,7 @@ func TestListTestRunsMissingTestSuiteSlug(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{}
 
-	_, handler := ListTestRuns(ctx, mockClient)
+	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org": "org",
@@ -183,7 +183,7 @@ func TestGetTestRun(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetTestRun(ctx, mockClient)
+	tool, handler := GetTestRun(mockClient)
 
 	// Test tool properties
 	assert.Equal("get_test_run", tool.Name)
@@ -218,7 +218,7 @@ func TestGetTestRunWithError(t *testing.T) {
 		},
 	}
 
-	_, handler := GetTestRun(ctx, mockClient)
+	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -238,7 +238,7 @@ func TestGetTestRunMissingOrg(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{}
 
-	_, handler := GetTestRun(ctx, mockClient)
+	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"test_suite_slug": "suite1",
@@ -257,7 +257,7 @@ func TestGetTestRunMissingTestSuiteSlug(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{}
 
-	_, handler := GetTestRun(ctx, mockClient)
+	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":    "org",
@@ -276,7 +276,7 @@ func TestGetTestRunMissingRunID(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{}
 
-	_, handler := GetTestRun(ctx, mockClient)
+	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -304,7 +304,7 @@ func TestGetTestRunHTTPError(t *testing.T) {
 		},
 	}
 
-	_, handler := GetTestRun(ctx, mockClient)
+	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -333,7 +333,7 @@ func TestListTestRunsHTTPError(t *testing.T) {
 		},
 	}
 
-	_, handler := ListTestRuns(ctx, mockClient)
+	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":             "org",
@@ -345,4 +345,3 @@ func TestListTestRunsHTTPError(t *testing.T) {
 	assert.True(result.IsError)
 	assert.Contains(result.Content[0].(mcp.TextContent).Text, "Access denied")
 }
-

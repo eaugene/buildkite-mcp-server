@@ -73,7 +73,7 @@ func (a *BuildkiteClientAdapter) rewriteArtifactURL(inputURL string) string {
 	return parsedURL.String()
 }
 
-func ListArtifacts(ctx context.Context, client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_artifacts",
 			mcp.WithDescription("List all artifacts for a build across all jobs, including file details, paths, sizes, MIME types, and download URLs"),
 			mcp.WithString("org",
@@ -159,7 +159,7 @@ func ListArtifacts(ctx context.Context, client ArtifactsClient) (tool mcp.Tool, 
 		}
 }
 
-func GetArtifact(ctx context.Context, client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetArtifact(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_artifact",
 			mcp.WithDescription("Get detailed information about a specific artifact including its metadata, file size, SHA-1 hash, and download URL"),
 			mcp.WithString("url",

@@ -39,7 +39,7 @@ func TestCurrentUser(t *testing.T) {
 		},
 	}
 
-	tool, handler := CurrentUser(ctx, client)
+	tool, handler := CurrentUser(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

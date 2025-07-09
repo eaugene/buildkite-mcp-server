@@ -39,7 +39,7 @@ func withJobsPagination() mcp.ToolOption {
 	}
 }
 
-func GetJobs(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_jobs",
 			mcp.WithDescription("Get all jobs for a specific build including their state, timing, commands, and execution details"),
 			mcp.WithString("org",
@@ -150,7 +150,7 @@ func GetJobs(ctx context.Context, client BuildsClient) (tool mcp.Tool, handler s
 		}
 }
 
-func GetJobLogs(ctx context.Context, client *buildkite.Client) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_job_logs",
 			mcp.WithDescription("Get the log output and metadata for a specific job, including content, size, and header timestamps. Automatically saves to file for large logs to avoid token limits."),
 			mcp.WithString("org",

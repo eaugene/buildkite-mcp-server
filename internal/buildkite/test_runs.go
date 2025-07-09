@@ -20,7 +20,7 @@ type TestRunsClient interface {
 	GetFailedExecutions(ctx context.Context, org, slug, runID string, opt *buildkite.FailedExecutionsOptions) ([]buildkite.FailedExecution, *buildkite.Response, error)
 }
 
-func ListTestRuns(ctx context.Context, client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_test_runs",
 			mcp.WithDescription("List all test runs for a test suite in Buildkite Test Engine"),
 			mcp.WithString("org",
@@ -96,7 +96,7 @@ func ListTestRuns(ctx context.Context, client TestRunsClient) (tool mcp.Tool, ha
 		}
 }
 
-func GetTestRun(ctx context.Context, client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_test_run",
 			mcp.WithDescription("Get a specific test run in Buildkite Test Engine"),
 			mcp.WithString("org",
