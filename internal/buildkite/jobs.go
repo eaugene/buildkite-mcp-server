@@ -8,14 +8,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/buildkite/buildkite-mcp-server/internal/buildkite/joblogs"
+	"github.com/buildkite/buildkite-mcp-server/internal/config"
 	"github.com/buildkite/buildkite-mcp-server/internal/tokens"
 	"github.com/buildkite/buildkite-mcp-server/internal/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -228,16 +229,19 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 				attribute.Int("token_count", tokenCount),
 			)
 
+			cfg := config.FromContext(ctx)
+
 			// if a threshold is set, we can use it to determine if we should switch to file mode
 			// this allows us to handle large logs more efficiently
 			// and avoid hitting token limits in the LLM
-			// this is configurable via the BUILDKITE_MCP_LOG_TOKEN_THRESHOLD environment variable
-			// if not set, we default to -1 which means no threshold
-			if threshold, ok := getTokenThreshold(); ok {
+			if threshold := cfg.JobLogTokenThreshold; threshold > 0 {
 				span.SetAttributes(attribute.Int("token_threshold", threshold))
 
 				// Smart switching: use file mode for large logs
 				if tokenCount > threshold {
+
+					log.Info().Int("token_count", tokenCount).Msg("Job log exceeds token threshold, switching to file mode")
+
 					return handleLargeLogFile(ctx, processedLog, JobLogsResponse{
 						TokenCount:  tokenCount,
 						JobUUID:     jobUUID,
@@ -277,16 +281,6 @@ type JobLogsResponse struct {
 	JobUUID       string `json:"job_uuid"`                  // Always included
 	BuildNumber   string `json:"build_number"`              // Always included
 	Reason        string `json:"reason,omitempty"`          // Why file mode was chosen
-}
-
-// getTokenThreshold returns the configurable token threshold for switching to file mode
-func getTokenThreshold() (int, bool) {
-	if thresholdStr := os.Getenv("BUILDKITE_MCP_LOG_TOKEN_THRESHOLD"); thresholdStr != "" {
-		if threshold, err := strconv.Atoi(thresholdStr); err == nil && threshold > 0 {
-			return threshold, true
-		}
-	}
-	return -1, false
 }
 
 // handleLargeLogFile handles saving large logs to file
