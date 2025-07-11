@@ -134,7 +134,7 @@ Docker (recommended):
 }
 ```
 
-Local binary:
+Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
 
 ```jsonc
 # ~/.config/amp/settings.json
@@ -143,7 +143,7 @@ Local binary:
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": 2000 }
     }
   }
 }
@@ -186,7 +186,7 @@ Docker (recommended):
 }
 ```
 
-Local binary:
+Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
 
 ```jsonc
 {
@@ -194,7 +194,7 @@ Local binary:
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": 2000 }
     }
   }
 }
@@ -218,7 +218,7 @@ extensions:
     timeout: 300
 ```
 
-Local binary:
+Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
 
 ```yaml
 extensions:
@@ -227,7 +227,7 @@ extensions:
     cmd: buildkite-mcp-server
     args: [stdio]
     enabled: true
-    envs: { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+    envs: { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": 2000 }
     type: stdio
     timeout: 300
 ```
@@ -276,7 +276,7 @@ extensions:
 }
 ```
 
-Local binary:
+Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
 
 ```jsonc
 {
@@ -284,7 +284,7 @@ Local binary:
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": 2000 }
     }
   }
 }
@@ -312,6 +312,29 @@ Or you can manually configure:
 }
 ```
 </details>
+
+---
+
+## 🔧 Environment Variables
+
+| Variable | Description | Default | Usage |
+|----------|-------------|---------|-------|
+| `BUILDKITE_API_TOKEN` | Your Buildkite API access token | Required | Authentication for all API requests |
+| `JOB_LOG_TOKEN_THRESHOLD` | Token threshold for job logs | `0` (disabled) | **Local installations only** - Downloads logs to temp directory when exceeded |
+
+### Job Log Token Threshold
+
+The `JOB_LOG_TOKEN_THRESHOLD` environment variable controls when large job logs are downloaded to your local temporary directory instead of being returned directly.
+
+**⚠️ Important**: This setting should only be used with local installations as it:
+- Downloads job logs to your system's temporary directory
+- Reads log files from disk instead of returning them in the response
+- May consume local disk space for large log files
+
+When the threshold is exceeded, the `get_job_logs` tool will:
+1. Download the log content to a temporary file
+2. Return the file path and metadata instead of raw log content
+3. Include the reason for file-based delivery in the response
 
 ---
 
