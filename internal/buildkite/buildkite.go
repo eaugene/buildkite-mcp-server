@@ -42,13 +42,13 @@ type ClientSidePaginationParams struct {
 
 // ClientSidePaginatedResult represents a paginated result for client-side pagination
 type ClientSidePaginatedResult[T any] struct {
-	Items      []T    `json:"items"`
-	Page       int    `json:"page"`
-	PerPage    int    `json:"per_page"`
-	Total      int    `json:"total"`
-	TotalPages int    `json:"total_pages"`
-	HasNext    bool   `json:"has_next"`
-	HasPrev    bool   `json:"has_prev"`
+	Items      []T  `json:"items"`
+	Page       int  `json:"page"`
+	PerPage    int  `json:"per_page"`
+	Total      int  `json:"total"`
+	TotalPages int  `json:"total_pages"`
+	HasNext    bool `json:"has_next"`
+	HasPrev    bool `json:"has_prev"`
 }
 
 // withClientSidePagination adds client-side pagination options to a tool
@@ -72,7 +72,7 @@ func withClientSidePagination() mcp.ToolOption {
 func getClientSidePaginationParams(r mcp.CallToolRequest) ClientSidePaginationParams {
 	page := r.GetInt("page", 1)
 	perPage := r.GetInt("perPage", 25) // Default page size for client-side pagination
-	
+
 	return ClientSidePaginationParams{
 		Page:    page,
 		PerPage: perPage,
@@ -86,10 +86,10 @@ func applyClientSidePagination[T any](items []T, params ClientSidePaginationPara
 	if totalPages == 0 {
 		totalPages = 1
 	}
-	
+
 	startIndex := (params.Page - 1) * params.PerPage
 	endIndex := startIndex + params.PerPage
-	
+
 	var paginatedItems []T
 	if startIndex >= total {
 		paginatedItems = []T{}
@@ -99,7 +99,7 @@ func applyClientSidePagination[T any](items []T, params ClientSidePaginationPara
 		}
 		paginatedItems = items[startIndex:endIndex]
 	}
-	
+
 	return ClientSidePaginatedResult[T]{
 		Items:      paginatedItems,
 		Page:       params.Page,

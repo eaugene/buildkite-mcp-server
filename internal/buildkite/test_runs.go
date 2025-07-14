@@ -162,5 +162,3 @@ func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandle
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
-
-
