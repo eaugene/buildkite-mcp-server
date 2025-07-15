@@ -13,7 +13,7 @@ updates:
         patterns:
           - golang.org/x/*
   - package-ecosystem: docker
-    directory: /
+    directory: .buildkite
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
