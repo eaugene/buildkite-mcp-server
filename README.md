@@ -107,6 +107,15 @@ goreleaser build --snapshot --clean
 make build    # uses goreleaser (snapshot)
 ```
 
+### 4. Docker Desktop
+
+[![Add to Docker Desktop](https://img.shields.io/badge/Add%20to%20Docker%20Desktop-17191e?style=flat&logo=docker)](https://hub.docker.com/open-desktop?url=https://open.docker.com/dashboard/mcp/servers/id/buildkite/config?enable=true)
+
+```sh
+docker mcp server enable buildkite
+```
+
+View on [Docker MCP Hub](https://hub.docker.com/mcp/server/buildkite)
 ---
 
 ## ⚙️ Configuration & Usage
