@@ -92,10 +92,6 @@ func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHa
 				Title:        "Artifact List",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
-			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Artifacts",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
-			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListArtifacts")
