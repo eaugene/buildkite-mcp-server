@@ -344,16 +344,16 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 						"properties": map[string]any{
 							"key": map[string]any{
 								"type":        "string",
-								"description": "The name of the environment variable",
+								"description": "The key of the meta-data item",
 							},
 							"value": map[string]any{
 								"type":        "string",
-								"description": "The value of the environment variable",
+								"description": "The value of the meta-data item",
 							},
 						},
 					},
 				),
-				mcp.Description("Environment variables to set for the build")),
+				mcp.Description("Meta-data values to set for the build")),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Create Build",
 				ReadOnlyHint: mcp.ToBoolPtr(false),
