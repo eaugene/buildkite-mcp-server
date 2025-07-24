@@ -3,7 +3,8 @@ package commands
 import (
 	"context"
 
-	"github.com/mark3labs/mcp-go/server"
+	"github.com/buildkite/buildkite-mcp-server/pkg/server"
+	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,9 +14,9 @@ type HTTPCmd struct {
 
 func (c *HTTPCmd) Run(ctx context.Context, globals *Globals) error {
 
-	mcpServer := NewMCPServer(globals)
+	mcpServer := server.NewMCPServer(globals.Version, globals.Client)
 
-	httpServer := server.NewSSEServer(mcpServer)
+	httpServer := mcpserver.NewSSEServer(mcpServer)
 
 	log.Ctx(ctx).Info().Str("address", c.Listen).Msg("Starting HTTP server")
 

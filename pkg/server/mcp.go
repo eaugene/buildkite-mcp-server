@@ -1,8 +1,8 @@
-package commands
+package server
 
 import (
-	"github.com/buildkite/buildkite-mcp-server/internal/buildkite"
-	"github.com/buildkite/buildkite-mcp-server/internal/trace"
+	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
+	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -13,18 +13,18 @@ func fromTypeTool[T any](tool mcp.Tool, handler mcp.TypedToolHandlerFunc[T]) (mc
 	return tool, mcp.NewTypedToolHandler(handler)
 }
 
-func NewMCPServer(globals *Globals) *server.MCPServer {
+func NewMCPServer(version string, client *gobuildkite.Client) *server.MCPServer {
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
-		globals.Version,
+		version,
 		server.WithToolCapabilities(true),
 		server.WithPromptCapabilities(true),
 		server.WithHooks(trace.NewHooks()),
 		server.WithLogging())
 
-	log.Info().Str("version", globals.Version).Msg("Starting Buildkite MCP server")
+	log.Info().Str("version", version).Msg("Starting Buildkite MCP server")
 
-	s.AddTools(BuildkiteTools(globals.Client)...)
+	s.AddTools(BuildkiteTools(client)...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),

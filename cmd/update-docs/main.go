@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/commands"
+	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
-	"github.com/mark3labs/mcp-go/server"
+	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
 const (
@@ -24,7 +24,7 @@ func main() {
 	client := &gobuildkite.Client{}
 
 	// Collect all tools
-	tools := commands.BuildkiteTools(client)
+	tools := server.BuildkiteTools(client)
 
 	// Generate markdown documentation for the tools
 	toolsDocs := generateToolsDocs(tools)
@@ -33,7 +33,7 @@ func main() {
 	updateReadme(toolsDocs)
 }
 
-func generateToolsDocs(tools []server.ServerTool) string {
+func generateToolsDocs(tools []mcpserver.ServerTool) string {
 	var buffer strings.Builder
 
 	buffer.WriteString(toolsSectionStart + "\n\n| Tool | Description |\n|------|-------------|\n")

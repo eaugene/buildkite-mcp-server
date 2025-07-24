@@ -3,8 +3,9 @@ package commands
 import (
 	"context"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/config"
-	"github.com/mark3labs/mcp-go/server"
+	"github.com/buildkite/buildkite-mcp-server/pkg/config"
+	"github.com/buildkite/buildkite-mcp-server/pkg/server"
+	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
 type StdioCmd struct {
@@ -12,16 +13,16 @@ type StdioCmd struct {
 }
 
 func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
-	s := NewMCPServer(globals)
+	s := server.NewMCPServer(globals.Version, globals.Client)
 
-	return server.ServeStdio(s,
-		server.WithStdioContextFunc(
+	return mcpserver.ServeStdio(s,
+		mcpserver.WithStdioContextFunc(
 			setupContext(&c.Config, globals),
 		),
 	)
 }
 
-func setupContext(cfg *config.Config, globals *Globals) server.StdioContextFunc {
+func setupContext(cfg *config.Config, globals *Globals) mcpserver.StdioContextFunc {
 	return func(ctx context.Context) context.Context {
 
 		// add the logger to the context
