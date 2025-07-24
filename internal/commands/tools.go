@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 )
 
@@ -16,7 +17,7 @@ func (c *ToolsCmd) Run(ctx context.Context, globals *Globals) error {
 	client := &gobuildkite.Client{}
 
 	// Collect all tools
-	tools := BuildkiteTools(client)
+	tools := server.BuildkiteTools(client)
 
 	for _, tool := range tools {
 

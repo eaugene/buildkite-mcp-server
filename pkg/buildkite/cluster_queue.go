@@ -5,82 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/trace"
+	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"go.opentelemetry.io/otel/attribute"
 )
 
-type ClustersClient interface {
-	List(ctx context.Context, org string, opts *buildkite.ClustersListOptions) ([]buildkite.Cluster, *buildkite.Response, error)
-	Get(ctx context.Context, org, id string) (buildkite.Cluster, *buildkite.Response, error)
+type ClusterQueuesClient interface {
+	List(ctx context.Context, org, clusterID string, opts *buildkite.ClusterQueuesListOptions) ([]buildkite.ClusterQueue, *buildkite.Response, error)
+	Get(ctx context.Context, org, clusterID, queueID string) (buildkite.ClusterQueue, *buildkite.Response, error)
 }
 
-func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
-	return mcp.NewTool("list_clusters",
-			mcp.WithDescription("List all clusters in an organization with their names, descriptions, default queues, and creation details"),
-			mcp.WithString("org",
-				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
-			),
-			withPagination(),
-			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Clusters",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
-			}),
-		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			ctx, span := trace.Start(ctx, "buildkite.ListClusters")
-			defer span.End()
-
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			paginationParams, err := optionalPaginationParams(request)
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.Int("page", paginationParams.Page),
-				attribute.Int("per_page", paginationParams.PerPage),
-			)
-
-			clusters, resp, err := client.List(ctx, org, &buildkite.ClustersListOptions{
-				ListOptions: paginationParams,
-			})
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("Failed to list clusters"), nil
-			}
-			if len(clusters) == 0 {
-				return mcp.NewToolResultText("No clusters found"), nil
-			}
-
-			result := PaginatedResult[buildkite.Cluster]{
-				Items: clusters,
-				Headers: map[string]string{
-					"Link": resp.Header.Get("Link"),
-				},
-			}
-
-			r, err := json.Marshal(&result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal clusters response: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
-		}
-}
-
-func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
-	return mcp.NewTool("get_cluster",
-			mcp.WithDescription("Get detailed information about a specific cluster including its name, description, default queue, and configuration"),
+func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+	return mcp.NewTool("list_cluster_queues",
+			mcp.WithDescription("List all queues in a cluster with their keys, descriptions, dispatch status, and agent configuration"),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("The organization slug for the owner of the pipeline"),
@@ -89,12 +28,13 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 				mcp.Required(),
 				mcp.Description("The id of the cluster"),
 			),
+			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Cluster",
+				Title:        "List Cluster Queues",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			ctx, span := trace.Start(ctx, "buildkite.GetCluster")
+			ctx, span := trace.Start(ctx, "buildkite.ListClusterQueues")
 			defer span.End()
 
 			org, err := request.RequireString("org")
@@ -106,24 +46,105 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
+
+			paginationParams, err := optionalPaginationParams(request)
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
 			span.SetAttributes(
 				attribute.String("org", org),
 				attribute.String("cluster_id", clusterID),
+				attribute.Int("page", paginationParams.Page),
+				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			cluster, resp, err := client.Get(ctx, org, clusterID)
+			queues, resp, err := client.List(ctx, org, clusterID, &buildkite.ClusterQueuesListOptions{
+				ListOptions: paginationParams,
+			})
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
 			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("Failed to get cluster"), nil
+				return mcp.NewToolResultError("Failed to list clusters"), nil
+			}
+			if len(queues) == 0 {
+				return mcp.NewToolResultText("No clusters found"), nil
 			}
 
-			r, err := json.Marshal(cluster)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal cluster response: %w", err)
+			result := PaginatedResult[buildkite.ClusterQueue]{
+				Items: queues,
+				Headers: map[string]string{
+					"Link": resp.Header.Get("Link"),
+				},
 			}
+
+			r, err := json.Marshal(&result)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal cluster queues response: %w", err)
+			}
+
+			return mcp.NewToolResultText(string(r)), nil
+		}
+}
+
+func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+	return mcp.NewTool("get_cluster_queue",
+			mcp.WithDescription("Get detailed information about a specific queue including its key, description, dispatch status, and hosted agent configuration"),
+			mcp.WithString("org",
+				mcp.Required(),
+				mcp.Description("The organization slug for the owner of the pipeline"),
+			),
+			mcp.WithString("cluster_id",
+				mcp.Required(),
+				mcp.Description("The id of the cluster"),
+			),
+			mcp.WithString("queue_id",
+				mcp.Required(),
+				mcp.Description("The id of the queue"),
+			),
+			mcp.WithToolAnnotation(mcp.ToolAnnotation{
+				Title:        "Get Cluster Queue",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
+			}),
+		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			ctx, span := trace.Start(ctx, "buildkite.GetClusterQueue")
+			defer span.End()
+
+			org, err := request.RequireString("org")
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+
+			clusterID, err := request.RequireString("cluster_id")
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+
+			queueID, err := request.RequireString("queue_id")
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+			span.SetAttributes(
+				attribute.String("org", org),
+				attribute.String("cluster_id", clusterID),
+				attribute.String("queue_id", queueID),
+			)
+
+			queue, resp, err := client.Get(ctx, org, clusterID, queueID)
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+
+			if resp.StatusCode != 200 {
+				return mcp.NewToolResultError("Failed to list clusters"), nil
+			}
+
+			r, err := json.Marshal(queue)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal cluster queue response: %w", err)
+			}
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }

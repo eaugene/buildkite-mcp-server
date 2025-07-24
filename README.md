@@ -385,7 +385,11 @@ When the threshold is exceeded, the `get_job_logs` tool will:
 
 ![Get Pipeline Tool](docs/images/get_pipeline.png)
 
+---
 
+## Library Usage
+
+The exported Go API of this module should be considered unstable, and subject to breaking changes as we evolve this project.
 
 ---
 

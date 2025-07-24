@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/trace"
+	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
