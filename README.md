@@ -369,7 +369,6 @@ When the threshold is exceeded, the `get_job_logs` tool will:
 | `current_user` | Get details about the user account that owns the API token, including name, email, avatar, and account creation date |
 | `user_token_organization` | Get the organization associated with the user token used for this request |
 | `get_jobs` | Get all jobs for a specific build including their state, timing, commands, and execution details |
-| `get_job_logs` | Get the log output and metadata for a specific job, including content, size, and header timestamps |
 | `list_artifacts` | List all artifacts for a build across all jobs, including file details, paths, sizes, MIME types, and download URLs |
 | `get_artifact` | Get detailed information about a specific artifact including its metadata, file size, SHA-1 hash, and download URL |
 | `list_annotations` | List all annotations for a build, including their context, style (success/info/warning/error), rendered HTML content, and creation timestamps |
@@ -377,6 +376,10 @@ When the threshold is exceeded, the `get_job_logs` tool will:
 | `get_test_run` | Get a specific test run in Buildkite Test Engine |
 | `get_failed_executions` | Get failed test executions for a specific test run in Buildkite Test Engine. Optionally get the expanded failure details such as full error messages and stack traces. |
 | `get_test` | Get a specific test in Buildkite Test Engine. This provides additional metadata for failed test executions |
+| `search_logs` | Search log entries using regex patterns with optional context lines |
+| `tail_logs` | Show the last N entries from the log file |
+| `get_logs_info` | Get metadata and statistics about the Parquet log file |
+| `read_logs` | Read log entries from the file, optionally starting from a specific row number |
 | `access_token` | Get information about the current API access token including its scopes and UUID |
 
 ---
