@@ -38,7 +38,7 @@ docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkit
 | Requirement | Notes |
 |-------------|-------|
 | Docker ≥ 20.x | Recommended path – run in an isolated container |
-| **OR** Go ≥ 1.22 | Needed only for building/running natively |
+| **OR** Go ≥ 1.24 | Needed only for building natively |
 | Buildkite API token | Create at https://buildkite.com/user/api-access-tokens |
 | Internet access to `ghcr.io` | To pull the pre-built image |
 

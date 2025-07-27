@@ -6,3 +6,4 @@ vendor/
 .bk.yaml
 /buildkite-mcp-server
 coverage.out
+/specs

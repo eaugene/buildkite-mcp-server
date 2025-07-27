@@ -7,13 +7,14 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 func fromTypeTool[T any](tool mcp.Tool, handler mcp.TypedToolHandlerFunc[T]) (mcp.Tool, server.ToolHandlerFunc) {
 	return tool, mcp.NewTypedToolHandler(handler)
 }
 
-func NewMCPServer(version string, client *gobuildkite.Client) *server.MCPServer {
+func NewMCPServer(version string, client *gobuildkite.Client, parquetClient *buildkitelogs.ParquetClient) *server.MCPServer {
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
 		version,
@@ -24,7 +25,7 @@ func NewMCPServer(version string, client *gobuildkite.Client) *server.MCPServer 
 
 	log.Info().Str("version", version).Msg("Starting Buildkite MCP server")
 
-	s.AddTools(BuildkiteTools(client)...)
+	s.AddTools(BuildkiteTools(client, parquetClient)...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
@@ -33,7 +34,7 @@ func NewMCPServer(version string, client *gobuildkite.Client) *server.MCPServer 
 	return s
 }
 
-func BuildkiteTools(client *gobuildkite.Client) []server.ServerTool {
+func BuildkiteTools(client *gobuildkite.Client, parquetClient *buildkitelogs.ParquetClient) []server.ServerTool {
 	// Create a client adapter so that we can use a mock or true client
 	clientAdapter := &buildkite.BuildkiteClientAdapter{Client: client}
 
@@ -75,7 +76,6 @@ func BuildkiteTools(client *gobuildkite.Client) []server.ServerTool {
 
 	// Job tools
 	tools = addTool(buildkite.GetJobs(client.Builds))
-	tools = addTool(buildkite.GetJobLogs(client))
 
 	// Artifacts tools
 	tools = addTool(buildkite.ListArtifacts(clientAdapter))
@@ -93,6 +93,20 @@ func BuildkiteTools(client *gobuildkite.Client) []server.ServerTool {
 
 	// Test tools
 	tools = addTool(buildkite.GetTest(client.Tests))
+
+	// Job Log tools (Parquet-based)
+	tools = addTool(
+		fromTypeTool(buildkite.SearchLogs(parquetClient)),
+	)
+	tools = addTool(
+		fromTypeTool(buildkite.TailLogs(parquetClient)),
+	)
+	tools = addTool(
+		fromTypeTool(buildkite.GetLogsInfo(parquetClient)),
+	)
+	tools = addTool(
+		fromTypeTool(buildkite.ReadLogs(parquetClient)),
+	)
 
 	// Other tools
 	tools = addTool(buildkite.AccessToken(client.AccessTokens))

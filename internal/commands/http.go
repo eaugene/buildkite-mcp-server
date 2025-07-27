@@ -14,7 +14,7 @@ type HTTPCmd struct {
 
 func (c *HTTPCmd) Run(ctx context.Context, globals *Globals) error {
 
-	mcpServer := server.NewMCPServer(globals.Version, globals.Client)
+	mcpServer := server.NewMCPServer(globals.Version, globals.Client, globals.ParquetClient)
 
 	httpServer := mcpserver.NewSSEServer(mcpServer)
 

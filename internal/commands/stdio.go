@@ -13,7 +13,7 @@ type StdioCmd struct {
 }
 
 func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
-	s := server.NewMCPServer(globals.Version, globals.Client)
+	s := server.NewMCPServer(globals.Version, globals.Client, globals.ParquetClient)
 
 	return mcpserver.ServeStdio(s,
 		mcpserver.WithStdioContextFunc(
