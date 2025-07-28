@@ -9,6 +9,7 @@ import (
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
@@ -69,8 +70,27 @@ func main() {
 	}
 
 	// Create ParquetClient with cache URL from flag/env (uses upstream library's high-level client)
-	parquetClient := buildkitelogs.NewParquetClient(client, cli.CacheURL)
+	buildkiteLogsClient, err := buildkitelogs.NewClient(client, cli.CacheURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to create buildkite logs client")
+	}
 
-	err = cmd.Run(&commands.Globals{Version: version, Client: client, ParquetClient: parquetClient, Logger: logger})
+	buildkiteLogsClient.Hooks().AddAfterCacheCheck(func(ctx context.Context, result *buildkitelogs.CacheCheckResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Checked job logs cache")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterLogDownload(func(ctx context.Context, result *buildkitelogs.LogDownloadResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Downloaded and cached job logs")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterLogParsing(func(ctx context.Context, result *buildkitelogs.LogParsingResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Parsed logs to Parquet")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterBlobStorage(func(ctx context.Context, result *buildkitelogs.BlobStorageResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Stored logs to blob storage")
+	})
+
+	err = cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient, Logger: logger})
 	cmd.FatalIfErrorf(err)
 }

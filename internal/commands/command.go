@@ -10,10 +10,10 @@ import (
 )
 
 type Globals struct {
-	Client        *gobuildkite.Client
-	ParquetClient *buildkitelogs.ParquetClient
-	Version       string
-	Logger        zerolog.Logger
+	Client              *gobuildkite.Client
+	BuildkiteLogsClient *buildkitelogs.Client
+	Version             string
+	Logger              zerolog.Logger
 }
 
 func UserAgent(version string) string {

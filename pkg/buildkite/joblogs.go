@@ -14,13 +14,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// ParquetClient interface for dependency injection (matches upstream library interface)
-type ParquetClient interface {
+// BuildkiteLogsClient interface for dependency injection (matches upstream library interface)
+type BuildkiteLogsClient interface {
 	DownloadAndCache(ctx context.Context, org, pipeline, build, job string, cacheTTL time.Duration, forceRefresh bool) (string, error)
 }
 
-// Verify that upstream ParquetClient implements our interface
-var _ ParquetClient = (*buildkitelogs.ParquetClient)(nil)
+// Verify that upstream BuildkiteLogsClient implements our interface
+var _ BuildkiteLogsClient = (*buildkitelogs.Client)(nil)
 
 // Common parameter structures for log tools
 type JobLogsBaseParams struct {
@@ -94,7 +94,7 @@ type LogResponse struct {
 type SearchOptions = buildkitelogs.SearchOptions
 
 // Real implementation using buildkite-logs-parquet library with injected client
-func newParquetReader(ctx context.Context, client ParquetClient, params JobLogsBaseParams) (*buildkitelogs.ParquetReader, error) {
+func newParquetReader(ctx context.Context, client BuildkiteLogsClient, params JobLogsBaseParams) (*buildkitelogs.ParquetReader, error) {
 	// Parse cache TTL
 	ttl := parseCacheTTL(params.CacheTTL)
 
@@ -216,7 +216,7 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 }
 
 // SearchLogs implements the search_logs MCP tool
-func SearchLogs(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
+func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
 	return mcp.NewTool("search_logs",
 			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20."),
 			mcp.WithString("org",
@@ -370,7 +370,7 @@ func SearchLogs(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 }
 
 // TailLogs implements the tail_logs MCP tool
-func TailLogs(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
+func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
 	return mcp.NewTool("tail_logs",
 			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues."),
 			mcp.WithString("org",
@@ -482,7 +482,7 @@ func TailLogs(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandler
 }
 
 // GetLogsInfo implements the get_logs_info MCP tool
-func GetLogsInfo(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[JobLogsBaseParams]) {
+func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[JobLogsBaseParams]) {
 	return mcp.NewTool("get_logs_info",
 			mcp.WithDescription("Get metadata and statistics about the Parquet log file. 📊 RECOMMENDED as first step - check file size before reading large logs to plan your approach efficiently."),
 			mcp.WithString("org",
@@ -571,7 +571,7 @@ func GetLogsInfo(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHand
 }
 
 // ReadLogs implements the read_logs MCP tool
-func ReadLogs(client ParquetClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
+func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
 	return mcp.NewTool("read_logs",
 			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits)."),
 			mcp.WithString("org",

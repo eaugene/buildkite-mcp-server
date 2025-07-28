@@ -14,7 +14,7 @@ func fromTypeTool[T any](tool mcp.Tool, handler mcp.TypedToolHandlerFunc[T]) (mc
 	return tool, mcp.NewTypedToolHandler(handler)
 }
 
-func NewMCPServer(version string, client *gobuildkite.Client, parquetClient *buildkitelogs.ParquetClient) *server.MCPServer {
+func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client) *server.MCPServer {
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
 		version,
@@ -25,7 +25,7 @@ func NewMCPServer(version string, client *gobuildkite.Client, parquetClient *bui
 
 	log.Info().Str("version", version).Msg("Starting Buildkite MCP server")
 
-	s.AddTools(BuildkiteTools(client, parquetClient)...)
+	s.AddTools(BuildkiteTools(client, buildkiteLogsClient)...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
@@ -34,7 +34,7 @@ func NewMCPServer(version string, client *gobuildkite.Client, parquetClient *bui
 	return s
 }
 
-func BuildkiteTools(client *gobuildkite.Client, parquetClient *buildkitelogs.ParquetClient) []server.ServerTool {
+func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client) []server.ServerTool {
 	// Create a client adapter so that we can use a mock or true client
 	clientAdapter := &buildkite.BuildkiteClientAdapter{Client: client}
 
@@ -96,16 +96,16 @@ func BuildkiteTools(client *gobuildkite.Client, parquetClient *buildkitelogs.Par
 
 	// Job Log tools (Parquet-based)
 	tools = addTool(
-		fromTypeTool(buildkite.SearchLogs(parquetClient)),
+		fromTypeTool(buildkite.SearchLogs(buildkiteLogsClient)),
 	)
 	tools = addTool(
-		fromTypeTool(buildkite.TailLogs(parquetClient)),
+		fromTypeTool(buildkite.TailLogs(buildkiteLogsClient)),
 	)
 	tools = addTool(
-		fromTypeTool(buildkite.GetLogsInfo(parquetClient)),
+		fromTypeTool(buildkite.GetLogsInfo(buildkiteLogsClient)),
 	)
 	tools = addTool(
-		fromTypeTool(buildkite.ReadLogs(parquetClient)),
+		fromTypeTool(buildkite.ReadLogs(buildkiteLogsClient)),
 	)
 
 	// Other tools
