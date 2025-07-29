@@ -65,6 +65,7 @@ type LogEntry struct {
 	Group     string `json:"group,omitempty"`
 	Content   string `json:"content"`
 	Command   bool   `json:"command,omitempty"`
+	RowNumber int64  `json:"row_number,omitempty"`
 }
 
 type TerseLogEntry struct {
@@ -72,6 +73,7 @@ type TerseLogEntry struct {
 	G   string `json:"g,omitempty"`
 	C   string `json:"c"`
 	CMD bool   `json:"cmd,omitempty"`
+	RN  int64  `json:"rn,omitempty"`
 }
 
 // Use the library's types
@@ -162,6 +164,9 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 			if entry.IsCommand() {
 				terse.CMD = true
 			}
+			if entry.RowNumber > 0 {
+				terse.RN = entry.RowNumber
+			}
 			result[i] = terse
 		}
 		return result
@@ -184,6 +189,9 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 			}
 			if entry.IsCommand() {
 				result[i].Command = true
+			}
+			if entry.RowNumber > 0 {
+				result[i].RowNumber = entry.RowNumber
 			}
 		}
 		return result
@@ -218,7 +226,7 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 // SearchLogs implements the search_logs MCP tool
 func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
 	return mcp.NewTool("search_logs",
-			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20."),
+			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20. Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -270,7 +278,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 				mcp.DefaultNumber(100),
 			),
 			mcp.WithString("format",
-				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "text")`),
+				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
 			),
 			mcp.WithBoolean("raw",
 				mcp.Description("Output raw log content without timestamps/groups (default: false)"),
@@ -316,7 +324,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 
 			// Set defaults
 			if params.Format == "" {
-				params.Format = "text"
+				params.Format = "json-terse"
 			}
 
 			// Create parquet reader
@@ -372,7 +380,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 // TailLogs implements the tail_logs MCP tool
 func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
 	return mcp.NewTool("tail_logs",
-			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues."),
+			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues. Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -394,7 +402,7 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				mcp.Min(1),
 			),
 			mcp.WithString("format",
-				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "text")`),
+				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
 			),
 			mcp.WithBoolean("raw",
 				mcp.Description("Output raw log content without timestamps/groups (default: false)"),
@@ -424,7 +432,7 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				params.Tail = 10
 			}
 			if params.Format == "" {
-				params.Format = "text"
+				params.Format = "json-terse"
 			}
 
 			span.SetAttributes(
@@ -502,7 +510,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 				mcp.Description("Job ID"),
 			),
 			mcp.WithString("format",
-				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "text")`),
+				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
 			),
 			mcp.WithString("cache_ttl",
 				mcp.Description(`Cache TTL for non-terminal jobs (default: "30s")`),
@@ -523,7 +531,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 
 			// Set defaults
 			if params.Format == "" {
-				params.Format = "text"
+				params.Format = "json-terse"
 			}
 
 			span.SetAttributes(
@@ -573,7 +581,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 // ReadLogs implements the read_logs MCP tool
 func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
 	return mcp.NewTool("read_logs",
-			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits)."),
+			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits). Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -600,7 +608,7 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				mcp.DefaultNumber(100),
 			),
 			mcp.WithString("format",
-				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "text")`),
+				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
 			),
 			mcp.WithBoolean("raw",
 				mcp.Description("Output raw log content without timestamps/groups (default: false)"),
@@ -627,7 +635,7 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 
 			// Set defaults
 			if params.Format == "" {
-				params.Format = "text"
+				params.Format = "json-terse"
 			}
 
 			span.SetAttributes(
