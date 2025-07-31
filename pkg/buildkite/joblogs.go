@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
+	buildkitelogs "github.com/buildkite/buildkite-logs"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/mark3labs/mcp-go/mcp"
-	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -161,9 +161,6 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 			if group != "" {
 				terse.G = group
 			}
-			if entry.IsCommand() {
-				terse.CMD = true
-			}
 			if entry.RowNumber > 0 {
 				terse.RN = entry.RowNumber
 			}
@@ -187,9 +184,6 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 			if entry.HasTime() {
 				result[i].Timestamp = entry.Timestamp
 			}
-			if entry.IsCommand() {
-				result[i].Command = true
-			}
 			if entry.RowNumber > 0 {
 				result[i].RowNumber = entry.RowNumber
 			}
@@ -212,9 +206,6 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, ra
 			}
 			if group != "" {
 				line += fmt.Sprintf("[%s] ", group)
-			}
-			if entry.IsCommand() {
-				line += "[CMD] "
 			}
 			line += content
 			result[i] = line
