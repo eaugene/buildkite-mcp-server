@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/buildkite/go-buildkite/v4"
+	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/rs/zerolog"
+	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 type Globals struct {
-	Client  *buildkite.Client
-	Version string
-	Logger  zerolog.Logger
+	Client              *gobuildkite.Client
+	BuildkiteLogsClient *buildkitelogs.Client
+	Version             string
+	Logger              zerolog.Logger
 }
 
 func UserAgent(version string) string {

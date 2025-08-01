@@ -7,8 +7,10 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/buildkite/buildkite-mcp-server/internal/commands"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
-	"github.com/buildkite/go-buildkite/v4"
+	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 var (
@@ -20,6 +22,7 @@ var (
 		Tools       commands.ToolsCmd `cmd:"" help:"list available tools." hidden:""`
 		APIToken    string            `help:"The Buildkite API token to use." env:"BUILDKITE_API_TOKEN"`
 		BaseURL     string            `help:"The base URL of the Buildkite API to use." env:"BUILDKITE_BASE_URL" default:"https://api.buildkite.com/"`
+		CacheURL    string            `help:"The blob storage URL for job logs cache." env:"BKLOG_CACHE_URL"`
 		Debug       bool              `help:"Enable debug mode."`
 		HTTPHeaders []string          `help:"Additional HTTP headers to send with every request. Format: 'Key: Value'" name:"http-header" env:"BUILDKITE_HTTP_HEADERS"`
 		Version     kong.VersionFlag
@@ -56,16 +59,38 @@ func main() {
 	// Parse additional headers into a map
 	headers := commands.ParseHeaders(cli.HTTPHeaders, logger)
 
-	client, err := buildkite.NewOpts(
-		buildkite.WithTokenAuth(cli.APIToken),
-		buildkite.WithUserAgent(commands.UserAgent(version)),
-		buildkite.WithHTTPClient(trace.NewHTTPClientWithHeaders(headers)),
-		buildkite.WithBaseURL(cli.BaseURL),
+	client, err := gobuildkite.NewOpts(
+		gobuildkite.WithTokenAuth(cli.APIToken),
+		gobuildkite.WithUserAgent(commands.UserAgent(version)),
+		gobuildkite.WithHTTPClient(trace.NewHTTPClientWithHeaders(headers)),
+		gobuildkite.WithBaseURL(cli.BaseURL),
 	)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to create buildkite client")
 	}
 
-	err = cmd.Run(&commands.Globals{Version: version, Client: client, Logger: logger})
+	// Create ParquetClient with cache URL from flag/env (uses upstream library's high-level client)
+	buildkiteLogsClient, err := buildkitelogs.NewClient(client, cli.CacheURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to create buildkite logs client")
+	}
+
+	buildkiteLogsClient.Hooks().AddAfterCacheCheck(func(ctx context.Context, result *buildkitelogs.CacheCheckResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Checked job logs cache")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterLogDownload(func(ctx context.Context, result *buildkitelogs.LogDownloadResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Downloaded and cached job logs")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterLogParsing(func(ctx context.Context, result *buildkitelogs.LogParsingResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Parsed logs to Parquet")
+	})
+
+	buildkiteLogsClient.Hooks().AddAfterBlobStorage(func(ctx context.Context, result *buildkitelogs.BlobStorageResult) {
+		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Stored logs to blob storage")
+	})
+
+	err = cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient, Logger: logger})
 	cmd.FatalIfErrorf(err)
 }

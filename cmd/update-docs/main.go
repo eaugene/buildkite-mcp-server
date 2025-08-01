@@ -23,8 +23,8 @@ func main() {
 	// Create a dummy client to initialize tools
 	client := &gobuildkite.Client{}
 
-	// Collect all tools
-	tools := server.BuildkiteTools(client)
+	// Collect all tools (pass nil for ParquetClient since this is just for docs)
+	tools := server.BuildkiteTools(client, nil)
 
 	// Generate markdown documentation for the tools
 	toolsDocs := generateToolsDocs(tools)

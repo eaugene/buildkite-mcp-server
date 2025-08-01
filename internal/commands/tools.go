@@ -16,8 +16,8 @@ func (c *ToolsCmd) Run(ctx context.Context, globals *Globals) error {
 
 	client := &gobuildkite.Client{}
 
-	// Collect all tools
-	tools := server.BuildkiteTools(client)
+	// Collect all tools (pass nil for ParquetClient since this is just for listing)
+	tools := server.BuildkiteTools(client, nil)
 
 	for _, tool := range tools {
 
