@@ -8,7 +8,6 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/require"
-	_ "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 // MockBuildkiteLogsClient for testing

@@ -547,7 +547,10 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			}
 
 			// Get cache file path
-			cacheFile, _ := buildkitelogs.GetCacheFilePath(params.Org, params.Pipeline, params.Build, params.Job)
+			cacheFile, err := buildkitelogs.GetCacheFilePath(params.Org, params.Pipeline, params.Build, params.Job)
+			if err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Failed to get cache file path: %v", err)), nil
+			}
 
 			// Create our response with additional cache file info
 			fileInfo := &FileInfo{
