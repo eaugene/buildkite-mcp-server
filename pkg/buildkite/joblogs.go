@@ -28,9 +28,6 @@ type JobLogsBaseParams struct {
 	Pipeline     string `json:"pipeline"`
 	Build        string `json:"build"`
 	Job          string `json:"job"`
-	Format       string `json:"format"`
-	Raw          bool   `json:"raw"`
-	PreserveANSI bool   `json:"preserve_ansi"`
 	CacheTTL     string `json:"cache_ttl"`
 	ForceRefresh bool   `json:"force_refresh"`
 }
@@ -59,21 +56,10 @@ type ReadLogsParams struct {
 	Limit int `json:"limit"`
 }
 
-// Response structures following the spec formats
-type LogEntry struct {
-	Timestamp int64  `json:"timestamp,omitempty"`
-	Group     string `json:"group,omitempty"`
-	Content   string `json:"content"`
-	Command   bool   `json:"command,omitempty"`
-	RowNumber int64  `json:"row_number,omitempty"`
-}
-
 type TerseLogEntry struct {
-	TS  int64  `json:"ts,omitempty"`
-	G   string `json:"g,omitempty"`
-	C   string `json:"c"`
-	CMD bool   `json:"cmd,omitempty"`
-	RN  int64  `json:"rn,omitempty"`
+	TS int64  `json:"ts,omitempty"`
+	C  string `json:"c"`
+	RN int64  `json:"rn,omitempty"`
 }
 
 // Use the library's types
@@ -84,12 +70,12 @@ type FileInfo struct {
 }
 
 type LogResponse struct {
-	Results     interface{} `json:"results,omitempty"`
-	Entries     interface{} `json:"entries,omitempty"`
-	FileInfo    *FileInfo   `json:"file_info,omitempty"`
-	MatchCount  int         `json:"match_count,omitempty"`
-	TotalRows   int64       `json:"total_rows,omitempty"`
-	QueryTimeMS int64       `json:"query_time_ms"`
+	Results     any       `json:"results,omitempty"`
+	Entries     any       `json:"entries,omitempty"`
+	FileInfo    *FileInfo `json:"file_info,omitempty"`
+	MatchCount  int       `json:"match_count,omitempty"`
+	TotalRows   int64     `json:"total_rows,omitempty"`
+	QueryTimeMS int64     `json:"query_time_ms"`
 }
 
 // Use the library's SearchOptions
@@ -130,94 +116,25 @@ func validateSearchPattern(pattern string) error {
 	return nil
 }
 
-func formatLogEntries(entries []buildkitelogs.ParquetLogEntry, format string, raw bool, preserveANSI bool) interface{} {
-	if raw {
-		result := make([]string, len(entries))
-		for i, entry := range entries {
-			if preserveANSI {
-				result[i] = entry.Content
-			} else {
-				result[i] = entry.CleanContent(true)
-			}
+func formatLogEntries(entries []buildkitelogs.ParquetLogEntry) any {
+	result := make([]TerseLogEntry, len(entries))
+	for i, entry := range entries {
+		content := entry.CleanContent(true)
+
+		terse := TerseLogEntry{C: content, RN: entry.RowNumber}
+		if entry.HasTime() {
+			terse.TS = entry.Timestamp
 		}
-		return result
+
+		result[i] = terse
 	}
-
-	switch format {
-	case "json-terse":
-		result := make([]TerseLogEntry, len(entries))
-		for i, entry := range entries {
-			content := entry.Content
-			group := entry.Group
-			if !preserveANSI {
-				content = entry.CleanContent(true)
-				group = entry.CleanGroup(true)
-			}
-
-			terse := TerseLogEntry{C: content}
-			if entry.HasTime() {
-				terse.TS = entry.Timestamp
-			}
-			if group != "" {
-				terse.G = group
-			}
-			if entry.RowNumber > 0 {
-				terse.RN = entry.RowNumber
-			}
-			result[i] = terse
-		}
-		return result
-	case "json":
-		result := make([]LogEntry, len(entries))
-		for i, entry := range entries {
-			content := entry.Content
-			group := entry.Group
-			if !preserveANSI {
-				content = entry.CleanContent(true)
-				group = entry.CleanGroup(true)
-			}
-
-			result[i] = LogEntry{
-				Content: content,
-				Group:   group,
-			}
-			if entry.HasTime() {
-				result[i].Timestamp = entry.Timestamp
-			}
-			if entry.RowNumber > 0 {
-				result[i].RowNumber = entry.RowNumber
-			}
-		}
-		return result
-	default: // text format
-		result := make([]string, len(entries))
-		for i, entry := range entries {
-			content := entry.Content
-			group := entry.Group
-			if !preserveANSI {
-				content = entry.CleanContent(true)
-				group = entry.CleanGroup(true)
-			}
-
-			line := ""
-			if entry.HasTime() {
-				ts := time.UnixMilli(entry.Timestamp)
-				line += fmt.Sprintf("[%s] ", ts.Format("2006-01-02 15:04:05.000"))
-			}
-			if group != "" {
-				line += fmt.Sprintf("[%s] ", group)
-			}
-			line += content
-			result[i] = line
-		}
-		return result
-	}
+	return result
 }
 
 // SearchLogs implements the search_logs MCP tool
 func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
 	return mcp.NewTool("search_logs",
-			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20. Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
+			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -305,17 +222,11 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 				attribute.Bool("invert_match", params.InvertMatch),
 				attribute.Bool("reverse", params.Reverse),
 				attribute.Int("limit", params.Limit),
-				attribute.String("format", params.Format),
 			)
 
 			// Validate search pattern
 			if err := validateSearchPattern(params.Pattern); err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			// Set defaults
-			if params.Format == "" {
-				params.Format = "json-terse"
 			}
 
 			// Create parquet reader
@@ -371,7 +282,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 // TailLogs implements the tail_logs MCP tool
 func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
 	return mcp.NewTool("tail_logs",
-			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues. Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
+			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -423,9 +334,6 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			if params.Tail <= 0 {
 				params.Tail = 10
 			}
-			if params.Format == "" {
-				params.Format = "json-terse"
-			}
 
 			span.SetAttributes(
 				attribute.String("org", params.Org),
@@ -433,7 +341,6 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				attribute.String("build", params.Build),
 				attribute.String("job", params.Job),
 				attribute.Int("tail", params.Tail),
-				attribute.String("format", params.Format),
 			)
 
 			// Create parquet reader
@@ -464,7 +371,7 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			}
 
 			queryTime := time.Since(startTime)
-			formattedEntries := formatLogEntries(entries, params.Format, params.Raw, params.PreserveANSI)
+			formattedEntries := formatLogEntries(entries)
 
 			response := LogResponse{
 				Entries:     formattedEntries,
@@ -521,17 +428,11 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 
 			startTime := time.Now()
 
-			// Set defaults
-			if params.Format == "" {
-				params.Format = "json-terse"
-			}
-
 			span.SetAttributes(
 				attribute.String("org", params.Org),
 				attribute.String("pipeline", params.Pipeline),
 				attribute.String("build", params.Build),
 				attribute.String("job", params.Job),
-				attribute.String("format", params.Format),
 			)
 
 			// Create parquet reader
@@ -576,7 +477,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 // ReadLogs implements the read_logs MCP tool
 func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
 	return mcp.NewTool("read_logs",
-			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits). Default json-terse format: {ts: timestamp_ms, g: group_name, c: content, cmd: is_command, rn: row_number}."),
+			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits). The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org",
 				mcp.Required(),
 				mcp.Description("Buildkite organization slug"),
@@ -602,15 +503,6 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				mcp.Min(0),
 				mcp.DefaultNumber(100),
 			),
-			mcp.WithString("format",
-				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
-			),
-			mcp.WithBoolean("raw",
-				mcp.Description("Output raw log content without timestamps/groups (default: false)"),
-			),
-			mcp.WithBoolean("preserve_ansi",
-				mcp.Description("Preserve ANSI escape codes (default: false)"),
-			),
 			mcp.WithString("cache_ttl",
 				mcp.Description(`Cache TTL for non-terminal jobs (default: "30s")`),
 			),
@@ -628,11 +520,6 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 
 			startTime := time.Now()
 
-			// Set defaults
-			if params.Format == "" {
-				params.Format = "json-terse"
-			}
-
 			span.SetAttributes(
 				attribute.String("org", params.Org),
 				attribute.String("pipeline", params.Pipeline),
@@ -640,7 +527,6 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				attribute.String("job", params.Job),
 				attribute.Int("seek", params.Seek),
 				attribute.Int("limit", params.Limit),
-				attribute.String("format", params.Format),
 			)
 
 			// Create parquet reader
@@ -676,7 +562,7 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			}
 
 			queryTime := time.Since(startTime)
-			formattedEntries := formatLogEntries(entries, params.Format, params.Raw, params.PreserveANSI)
+			formattedEntries := formatLogEntries(entries)
 
 			response := LogResponse{
 				Entries:     formattedEntries,
