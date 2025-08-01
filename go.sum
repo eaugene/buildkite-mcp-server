@@ -76,6 +76,8 @@ github.com/buildkite/buildkite-logs v0.5.2 h1:OS6G/tDSe3iRgVicsjQaiaO9xvKp5N1L0x
 github.com/buildkite/buildkite-logs v0.5.2/go.mod h1:j3BggD88HLhXrXyYIrVbRZJThVDQ5hInxQyLX/H5R2s=
 github.com/buildkite/go-buildkite/v4 v4.5.1 h1:45Vgtua5PlZwaaHiI0i7Zz9icOS8PTHkW1YIetpf7Xs=
 github.com/buildkite/go-buildkite/v4 v4.5.1/go.mod h1:fMPu+/7hXzJ7Gy3HpGuVCLgeHqzDdrgHuwQvt8p370I=
+github.com/buildkite/terminal-to-html/v3 v3.16.8 h1:QN/daUob6cmK8GcdKnwn9+YTlPr1vNj+oeAIiJK6fPc=
+github.com/buildkite/terminal-to-html/v3 v3.16.8/go.mod h1:+k1KVKROZocrTLsEQ9PEf9A+8+X8uaVV5iO1ZIOwKYM=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
@@ -133,6 +135,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 h1:X5VWvz21y3gzm9Nw/kaUeku/1+u
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1/go.mod h1:Zanoh4+gvIgluNqcfMVTJueD4wSS5hT7zTt4Mrutd90=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
+github.com/huantt/plaintext-extractor v1.1.0 h1:dZkJN0fGZf1o8x9UdR6hHqkZnqIwX94YlGJ/lSXUZ5c=
+github.com/huantt/plaintext-extractor v1.1.0/go.mod h1:zIIbG/hZnsnLgzDbZ2T8fOrA4SLGWCoHWWYZo0Anx9c=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
 github.com/klauspost/asmfmt v1.3.2 h1:4Ri7ox3EwapiOjCki+hw14RyKk201CN4rzyCJRFLpK4=
