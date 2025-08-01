@@ -1,5 +1,6 @@
 dist/
 .envrc*
+.zed
 .vscode
 vendor/
 *.zip
@@ -7,3 +8,6 @@ vendor/
 /buildkite-mcp-server
 coverage.out
 /specs
+
+# debugger binaries
+__debug_bin*
