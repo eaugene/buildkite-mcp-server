@@ -67,9 +67,15 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	)
 
 	// Build tools
-	tools = addTool(buildkite.ListBuilds(client.Builds))
-	tools = addTool(buildkite.GetBuild(client.Builds))
-	tools = addTool(buildkite.GetBuildTestEngineRuns(client.Builds))
+	tools = addTool(
+		fromTypeTool(buildkite.ListBuilds(client.Builds)),
+	)
+	tools = addTool(
+		fromTypeTool(buildkite.GetBuild(client.Builds)),
+	)
+	tools = addTool(
+		fromTypeTool(buildkite.GetBuildTestEngineRuns(client.Builds)),
+	)
 	tools = addTool(
 		fromTypeTool(buildkite.CreateBuild(client.Builds)),
 	)

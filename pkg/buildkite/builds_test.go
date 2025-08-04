@@ -59,7 +59,8 @@ func TestGetBuildDefault(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuild(client)
+	tool, typedHandler := GetBuild(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -73,7 +74,12 @@ func TestGetBuildDefault(t *testing.T) {
 	assert.NoError(err)
 
 	textContent := getTextResult(t, result)
-	assert.Equal(`{"id":"123","number":1,"state":"running","blocked":false,"author":{},"created_at":"0001-01-01T00:00:00Z","creator":{"avatar_url":"","created_at":null,"email":"","id":"","name":""},"job_summary":{"total":0,"by_state":{}}}`, textContent.Text)
+	// New format returns BuildDetail (detailed level by default)
+	assert.Contains(textContent.Text, `"id":"123"`)
+	assert.Contains(textContent.Text, `"number":1`)
+	assert.Contains(textContent.Text, `"state":"running"`)
+	assert.Contains(textContent.Text, `"job_summary":{"total":0,"by_state":{}}`)
+	assert.Contains(textContent.Text, `"jobs_total":0`)
 }
 
 func TestGetBuildWithJobSummary(t *testing.T) {
@@ -102,7 +108,8 @@ func TestGetBuildWithJobSummary(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuild(client)
+	tool, typedHandler := GetBuild(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -145,7 +152,8 @@ func TestListBuilds(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(client)
+	tool, typedHandler := ListBuilds(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -158,13 +166,19 @@ func TestListBuilds(t *testing.T) {
 
 	textContent := getTextResult(t, result)
 
-	assert.Equal(`{"headers":{"Link":""},"items":[{"id":"123","number":1,"state":"running","blocked":false,"author":{},"created_at":"0001-01-01T00:00:00Z","creator":{"avatar_url":"","created_at":null,"email":"","id":"","name":""}}]}`, textContent.Text)
+	// New format returns BuildSummary (summary level by default)
+	assert.Contains(textContent.Text, `"headers":{"Link":""}`)
+	assert.Contains(textContent.Text, `"items":[`)
+	assert.Contains(textContent.Text, `"id":"123"`)
+	assert.Contains(textContent.Text, `"number":1`)
+	assert.Contains(textContent.Text, `"state":"running"`)
+	assert.Contains(textContent.Text, `"jobs_total":0`)
 
-	// Verify default pagination parameters - ensure they are set to 1 per page
+	// Verify default pagination parameters - new defaults
 	assert.NotNil(capturedOptions)
 	assert.Equal(1, capturedOptions.Page)
-	assert.Equal(1, capturedOptions.PerPage)
-	assert.Nil(capturedOptions.Branch) // Branch should be nil when not specified
+	assert.Equal(30, capturedOptions.PerPage) // New default
+	assert.Nil(capturedOptions.Branch)        // Branch should be nil when not specified
 }
 
 func TestListBuildsWithCustomPagination(t *testing.T) {
@@ -190,7 +204,8 @@ func TestListBuildsWithCustomPagination(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(client)
+	tool, typedHandler := ListBuilds(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -199,7 +214,7 @@ func TestListBuildsWithCustomPagination(t *testing.T) {
 		"org":           "org",
 		"pipeline_slug": "pipeline",
 		"page":          float64(3),
-		"perPage":       float64(50),
+		"per_page":      float64(50),
 	})
 	_, err := handler(ctx, request)
 	assert.NoError(err)
@@ -234,7 +249,8 @@ func TestListBuildsWithBranchFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListBuilds(client)
+	tool, typedHandler := ListBuilds(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -251,7 +267,7 @@ func TestListBuildsWithBranchFilter(t *testing.T) {
 	assert.NotNil(capturedOptions)
 	assert.Equal([]string{"main"}, capturedOptions.Branch)
 	assert.Equal(1, capturedOptions.Page)
-	assert.Equal(1, capturedOptions.PerPage)
+	assert.Equal(30, capturedOptions.PerPage) // New default
 }
 
 func TestGetBuildTestEngineRuns(t *testing.T) {
@@ -290,7 +306,8 @@ func TestGetBuildTestEngineRuns(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetBuildTestEngineRuns(client)
+	tool, typedHandler := GetBuildTestEngineRuns(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -333,7 +350,8 @@ func TestGetBuildTestEngineRunsNoBuildTestEngine(t *testing.T) {
 		},
 	}
 
-	_, handler := GetBuildTestEngineRuns(client)
+	_, typedHandler := GetBuildTestEngineRuns(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 
 	request := createMCPRequest(t, map[string]any{
 		"org":           "org",
@@ -354,7 +372,8 @@ func TestGetBuildTestEngineRunsMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	_, handler := GetBuildTestEngineRuns(client)
+	_, typedHandler := GetBuildTestEngineRuns(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
 
 	// Test missing org parameter
 	request := createMCPRequest(t, map[string]any{
