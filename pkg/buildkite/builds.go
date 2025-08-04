@@ -9,7 +9,6 @@ import (
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/mark3labs/mcp-go/server"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -25,13 +24,122 @@ type JobSummary struct {
 	ByState map[string]int `json:"by_state"`
 }
 
+// BuildSummary - Essential fields (~85% token reduction)
+type BuildSummary struct {
+	ID        string               `json:"id"`
+	Number    int                  `json:"number"`
+	State     string               `json:"state"`
+	Branch    string               `json:"branch"`
+	Commit    string               `json:"commit"`
+	Message   string               `json:"message"`
+	WebURL    string               `json:"web_url"`
+	CreatedAt *buildkite.Timestamp `json:"created_at"`
+	JobsTotal int                  `json:"jobs_total"`
+}
+
+// BuildDetail - Medium detail (~60% token reduction)
+type BuildDetail struct {
+	BuildSummary                      // Embed summary fields
+	Source       string               `json:"source"`
+	Author       buildkite.Author     `json:"author"`
+	StartedAt    *buildkite.Timestamp `json:"started_at"`
+	FinishedAt   *buildkite.Timestamp `json:"finished_at"`
+	JobSummary   *JobSummary          `json:"job_summary"`
+	// Exclude: Jobs[], Env{}, MetaData{}, Pipeline{}, TestEngine{}
+}
+
 // BuildWithSummary represents a build with job summary and optionally full job details
 type BuildWithSummary struct {
 	buildkite.Build
 	JobSummary *JobSummary `json:"job_summary"`
 }
 
-func ListBuilds(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+// ListBuildsArgs struct with enhanced filtering
+type ListBuildsArgs struct {
+	Org          string `json:"org"`
+	PipelineSlug string `json:"pipeline_slug"`
+	Branch       string `json:"branch"`       // existing
+	State        string `json:"state"`        // NEW: running, passed, failed, etc.
+	Commit       string `json:"commit"`       // NEW: specific commit SHA
+	Creator      string `json:"creator"`      // NEW: filter by build creator
+	DetailLevel  string `json:"detail_level"` // summary, detailed, full
+	Page         int    `json:"page"`
+	PerPage      int    `json:"per_page"`
+}
+
+// GetBuildArgs struct
+type GetBuildArgs struct {
+	Org          string `json:"org"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+	DetailLevel  string `json:"detail_level"` // summary, detailed, full
+}
+
+// GetBuildTestEngineRunsArgs struct
+type GetBuildTestEngineRunsArgs struct {
+	Org          string `json:"org"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+}
+
+// Helper functions for build conversion
+
+// summarizeBuild converts a buildkite.Build to BuildSummary
+func summarizeBuild(build buildkite.Build) BuildSummary {
+	return BuildSummary{
+		ID:        build.ID,
+		Number:    build.Number,
+		State:     build.State,
+		Branch:    build.Branch,
+		Commit:    build.Commit,
+		Message:   build.Message,
+		WebURL:    build.WebURL,
+		CreatedAt: build.CreatedAt,
+		JobsTotal: len(build.Jobs),
+	}
+}
+
+// detailBuild converts a buildkite.Build to BuildDetail with job summary
+func detailBuild(build buildkite.Build) BuildDetail {
+	summary := summarizeBuild(build)
+
+	// Create job summary
+	jobSummary := &JobSummary{
+		Total:   len(build.Jobs),
+		ByState: make(map[string]int),
+	}
+
+	for _, job := range build.Jobs {
+		if job.State == "" {
+			continue
+		}
+		jobSummary.ByState[job.State]++
+	}
+
+	return BuildDetail{
+		BuildSummary: summary,
+		Source:       build.Source,
+		Author:       build.Author,
+		StartedAt:    build.StartedAt,
+		FinishedAt:   build.FinishedAt,
+		JobSummary:   jobSummary,
+	}
+}
+
+// createPaginatedBuildResult creates a paginated result with the appropriate converter
+func createPaginatedBuildResult[T any](builds []buildkite.Build, converter func(buildkite.Build) T, headers map[string]string) PaginatedResult[T] {
+	items := make([]T, len(builds))
+	for i, build := range builds {
+		items[i] = converter(build)
+	}
+
+	return PaginatedResult[T]{
+		Items:   items,
+		Headers: headers,
+	}
+}
+
+func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListBuildsArgs]) {
 	return mcp.NewTool("list_builds",
 			mcp.WithDescription("List all builds for a pipeline with their status, commit information, and metadata"),
 			mcp.WithString("org",
@@ -45,51 +153,105 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerF
 			mcp.WithString("branch",
 				mcp.Description("Filter builds by git branch name"),
 			),
-			withPagination(),
+			mcp.WithString("state",
+				mcp.Description("Filter builds by state. Supports actual states (scheduled, running, passed, failed, canceled, skipped, etc.)"),
+			),
+			mcp.WithString("commit",
+				mcp.Description("Filter builds by specific commit SHA"),
+			),
+			mcp.WithString("creator",
+				mcp.Description("Filter builds by build creator"),
+			),
+			mcp.WithString("detail_level",
+				mcp.Description("Response detail level: 'summary' (essential fields), 'detailed' (medium detail), or 'full' (complete build data). Default: 'summary'"),
+			),
+			mcp.WithNumber("page",
+				mcp.Description("Page number for pagination (min 1)"),
+			),
+			mcp.WithNumber("per_page",
+				mcp.Description("Results per page for pagination (min 1, max 100)"),
+			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "List Builds",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
-		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		func(ctx context.Context, request mcp.CallToolRequest, args ListBuildsArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListBuilds")
 			defer span.End()
 
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Validate required parameters
+			if args.Org == "" {
+				return mcp.NewToolResultError("org parameter is required"), nil
 			}
-
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			branch := request.GetString("branch", "")
-
-			paginationParams, err := optionalPaginationParams(request)
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.String("pipeline_slug", pipelineSlug),
-				attribute.String("branch", branch),
-				attribute.Int("page", paginationParams.Page),
-				attribute.Int("per_page", paginationParams.PerPage),
+				attribute.String("org", args.Org),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("branch", args.Branch),
+				attribute.String("state", args.State),
+				attribute.String("commit", args.Commit),
+				attribute.String("creator", args.Creator),
+				attribute.String("detail_level", args.DetailLevel),
+				attribute.Int("page", args.Page),
+				attribute.Int("per_page", args.PerPage),
 			)
 
-			options := &buildkite.BuildsListOptions{
-				ExcludeJobs:     true,
-				ExcludePipeline: true,
-				ListOptions:     paginationParams,
-			}
-			if branch != "" {
-				options.Branch = []string{branch}
+			// Set default detail level
+			detailLevel := args.DetailLevel
+			if detailLevel == "" {
+				detailLevel = "summary"
 			}
 
-			builds, resp, err := client.ListByPipeline(ctx, org, pipelineSlug, options)
+			// Set default pagination
+			page := args.Page
+			if page == 0 {
+				page = 1
+			}
+			perPage := args.PerPage
+			if perPage == 0 {
+				perPage = 30
+			}
+
+			options := &buildkite.BuildsListOptions{
+				ListOptions: buildkite.ListOptions{
+					Page:    page,
+					PerPage: perPage,
+				},
+			}
+
+			// Set exclusions based on detail level
+			switch detailLevel {
+			case "summary":
+				options.ExcludeJobs = true
+				options.ExcludePipeline = true
+			case "detailed":
+				options.ExcludeJobs = true
+				options.ExcludePipeline = true
+			case "full":
+				// Include everything
+			default:
+				return mcp.NewToolResultError("detail_level must be 'summary', 'detailed', or 'full'"), nil
+			}
+
+			// Apply filters
+			if args.Branch != "" {
+				options.Branch = []string{args.Branch}
+			}
+			if args.State != "" {
+				options.State = []string{args.State}
+			}
+			if args.Commit != "" {
+				options.Commit = args.Commit
+			}
+			if args.Creator != "" {
+				options.Creator = args.Creator
+			}
+
+			builds, resp, err := client.ListByPipeline(ctx, args.Org, args.PipelineSlug, options)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
@@ -101,14 +263,24 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerF
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			result := PaginatedResult[buildkite.Build]{
-				Items: builds,
-				Headers: map[string]string{
-					"Link": resp.Header.Get("Link"),
-				},
+			headers := map[string]string{
+				"Link": resp.Header.Get("Link"),
 			}
 
-			r, err := json.Marshal(&result)
+			var result any
+			switch detailLevel {
+			case "summary":
+				result = createPaginatedBuildResult(builds, summarizeBuild, headers)
+			case "detailed":
+				result = createPaginatedBuildResult(builds, detailBuild, headers)
+			case "full":
+				result = PaginatedResult[buildkite.Build]{
+					Items:   builds,
+					Headers: headers,
+				}
+			}
+
+			r, err := json.Marshal(result)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal builds: %w", err)
 			}
@@ -117,7 +289,7 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerF
 		}
 }
 
-func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildTestEngineRunsArgs]) {
 	return mcp.NewTool("get_build_test_engine_runs",
 			mcp.WithDescription("Get test engine runs data for a specific build in Buildkite. This can be used to look up Test Runs."),
 			mcp.WithString("org",
@@ -137,32 +309,28 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler server.
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
-		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildTestEngineRunsArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetBuildTestEngineRuns")
 			defer span.End()
 
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Validate required parameters
+			if args.Org == "" {
+				return mcp.NewToolResultError("org parameter is required"), nil
 			}
-
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
 			}
-
-			buildNumber, err := request.RequireString("build_number")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.BuildNumber == "" {
+				return mcp.NewToolResultError("build_number parameter is required"), nil
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.String("pipeline_slug", pipelineSlug),
-				attribute.String("build_number", buildNumber),
+				attribute.String("org", args.Org),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("build_number", args.BuildNumber),
 			)
 
-			build, _, err := client.Get(ctx, org, pipelineSlug, buildNumber, &buildkite.BuildGetOptions{
+			build, _, err := client.Get(ctx, args.Org, args.PipelineSlug, args.BuildNumber, &buildkite.BuildGetOptions{
 				IncludeTestEngine: true,
 			})
 			if err != nil {
@@ -191,7 +359,7 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler server.
 		}
 }
 
-func GetBuild(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildArgs]) {
 	return mcp.NewTool("get_build",
 			mcp.WithDescription("Get detailed information about a specific build including its jobs, timing, and execution details"),
 			mcp.WithString("org",
@@ -206,39 +374,48 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFun
 				mcp.Required(),
 				mcp.Description("The number of the build"),
 			),
+			mcp.WithString("detail_level",
+				mcp.Description("Response detail level: 'summary' (essential fields), 'detailed' (medium detail), or 'full' (complete build data). Default: 'detailed'"),
+			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Get Build",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
-		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetBuild")
 			defer span.End()
 
-			org, err := request.RequireString("org")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Validate required parameters
+			if args.Org == "" {
+				return mcp.NewToolResultError("org parameter is required"), nil
 			}
-
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
 			}
-
-			buildNumber, err := request.RequireString("build_number")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.BuildNumber == "" {
+				return mcp.NewToolResultError("build_number parameter is required"), nil
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
-				attribute.String("pipeline_slug", pipelineSlug),
-				attribute.String("build_number", buildNumber),
+				attribute.String("org", args.Org),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("build_number", args.BuildNumber),
+				attribute.String("detail_level", args.DetailLevel),
 			)
 
-			build, _, err := client.Get(ctx, org, pipelineSlug, buildNumber, &buildkite.BuildGetOptions{
+			// Set default detail level
+			detailLevel := args.DetailLevel
+			if detailLevel == "" {
+				detailLevel = "detailed"
+			}
+
+			// Configure build get options based on detail level
+			options := &buildkite.BuildGetOptions{
 				IncludeTestEngine: true,
-			})
+			}
+
+			build, _, err := client.Get(ctx, args.Org, args.PipelineSlug, args.BuildNumber, options)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
@@ -250,28 +427,19 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFun
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			// Create job summary
-			jobSummary := &JobSummary{
-				Total:   len(build.Jobs),
-				ByState: make(map[string]int),
+			var result any
+			switch detailLevel {
+			case "summary":
+				result = summarizeBuild(build)
+			case "detailed":
+				result = detailBuild(build)
+			case "full":
+				result = build
+			default:
+				return mcp.NewToolResultError("detail_level must be 'summary', 'detailed', or 'full'"), nil
 			}
 
-			for _, job := range build.Jobs {
-				if job.State == "" {
-					continue
-				}
-
-				jobSummary.ByState[job.State]++
-			}
-
-			// Create build with summary - always exclude job details
-			buildWithSummary := BuildWithSummary{
-				Build:      build,
-				JobSummary: jobSummary,
-			}
-			buildWithSummary.Jobs = nil
-
-			r, err := json.Marshal(&buildWithSummary)
+			r, err := json.Marshal(result)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal build: %w", err)
 			}
