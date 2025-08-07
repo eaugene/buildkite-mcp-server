@@ -384,6 +384,20 @@ When the threshold is exceeded, the `get_job_logs` tool will:
 
 ---
 
+## 🌐 Streamable HTTP / SSE transport
+
+You can also run the MCP server using the Streamable HTTP Transport, and connect to the MCP server at <http://localhost:3000/mcp>.
+
+```sh
+buildkite-mcp-server http --listen "localhost:3000" --api-token=${BUILDKITE_API_TOKEN}
+```
+
+Or with the legacy HTTP/SSE transport, and connect to the MCP server at <http://localhost:3000/sse>.
+
+```sh
+buildkite-mcp-server http --listen "localhost:3000" --use-sse --api-token=${BUILDKITE_API_TOKEN}
+```
+
 ## 📸 Screenshots
 
 ![Get Pipeline Tool](docs/images/get_pipeline.png)
