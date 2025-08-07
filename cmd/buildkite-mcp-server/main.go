@@ -47,6 +47,8 @@ func main() {
 	if cli.Debug {
 		logger = logger.Level(zerolog.DebugLevel).With().Caller().Logger()
 	}
+	log.Logger = logger
+	zerolog.DefaultContextLogger = &logger
 
 	tp, err := trace.NewProvider(ctx, "buildkite-mcp-server", version)
 	if err != nil {
