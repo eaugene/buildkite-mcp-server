@@ -69,7 +69,19 @@ npx @modelcontextprotocol/inspector@latest buildkite-mcp-server stdio
 
 Then log into the web UI and hit connect.
 
-# Releasing to GitHub
+# Publishing a release
+
+- Draft a new release on GitHub: https://github.com/buildkite/buildkite-mcp-server/releases/new
+- Select a new tag version, bumping the minor or patch versions as appropriate. This project is pre-1.0, so we don't make strong compatibility guarantees.
+- Generate release notes
+- Save the release as a draft, and mention internal contributors on Slack before publishing
+- Publish the release
+
+A Buildkite pipeline will then automatically invoke the publishing pipeline, including publishing to GitHub Container Registry, Docker Hub, and update binaries to the GitHub release assets.
+
+# Manually releasing to GitHub Container Registry
+
+This process is automated by the CI pipeline, however you can manually release by following these steps:
 
 To push docker images GHCR you will need to login, you will need to generate a legacy GitHub PSK to do a release locally. This will be entered in the command below.
 
