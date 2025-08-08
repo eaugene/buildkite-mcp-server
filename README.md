@@ -213,7 +213,7 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
 <details>
 <summary>Cursor</summary>
 
-**Install directly:** [cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D](cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
+[Add Buildkite MCP Server to Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
 
 Docker (recommended):
 
