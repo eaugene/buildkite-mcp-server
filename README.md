@@ -244,7 +244,7 @@ Local binary:
 }
 ```
 
-Optional (Local binary with Job Log Token Threshold):
+Optional (Local binary with [Job Log Token Threshold](#job-log-token-threshold)):
 
 ```jsonc
 {
