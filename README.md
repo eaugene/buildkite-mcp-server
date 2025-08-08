@@ -15,9 +15,6 @@
 docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
 ```
 
-<a href="cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D">
-  <img src="https://cursor.com/deeplink/mcp-install-dark.png" alt="Add to Cursor" height="32">
-</a>
 
 ---
 
@@ -215,6 +212,8 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
 
 <details>
 <summary>Cursor</summary>
+
+**Install directly:** [cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D](cursor://anysphere.cursor-deeplink/mcp/install?name=buildkite&config=eyJjb21tYW5kIjoiZG9ja2VyIHJ1biAtaSAtLXJtIC1lIEJVSUxES0lURV9BUElfVE9LRU4gZ2hjci5pby9idWlsZGtpdGUvYnVpbGRraXRlLW1jcC1zZXJ2ZXIgc3RkaW8ifQ%3D%3D)
 
 Docker (recommended):
 
