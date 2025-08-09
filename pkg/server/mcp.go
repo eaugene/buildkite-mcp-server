@@ -20,6 +20,7 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 		version,
 		server.WithToolCapabilities(true),
 		server.WithPromptCapabilities(true),
+		server.WithResourceCapabilities(true, true),
 		server.WithHooks(trace.NewHooks()),
 		server.WithLogging())
 
@@ -30,6 +31,12 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
 	), buildkite.HandleUserTokenOrganizationPrompt)
+
+	s.AddResource(mcp.NewResource(
+		"debug-logs-guide",
+		"Debug Logs Guide",
+		mcp.WithResourceDescription("Comprehensive guide for debugging Buildkite build failures using logs"),
+	), buildkite.HandleDebugLogsGuideResource)
 
 	return s
 }
