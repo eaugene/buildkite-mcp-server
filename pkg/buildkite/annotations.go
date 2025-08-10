@@ -23,28 +23,24 @@ type AnnotationsClient interface {
 func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_annotations",
 			mcp.WithDescription("List all annotations for a build, including their context, style (success/info/warning/error), rendered HTML content, and creation timestamps"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The build number"),
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Annotations",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "List Annotations",
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListAnnotations")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -65,14 +61,14 @@ func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.To
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("pipeline_slug", pipelineSlug),
 				attribute.String("build_number", buildNumber),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			annotations, resp, err := client.ListByBuild(ctx, org, pipelineSlug, buildNumber, &buildkite.AnnotationListOptions{
+			annotations, resp, err := client.ListByBuild(ctx, orgSlug, pipelineSlug, buildNumber, &buildkite.AnnotationListOptions{
 				ListOptions: paginationParams,
 			})
 			if err != nil {

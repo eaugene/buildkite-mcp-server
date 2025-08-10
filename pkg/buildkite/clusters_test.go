@@ -53,7 +53,7 @@ func TestListClusters(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org": "org",
+		"org_slug": "org",
 	})
 	result, err := handler(ctx, request)
 	assert.NoError(err)
@@ -84,7 +84,7 @@ func TestGetCluster(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":        "org",
+		"org_slug":   "org",
 		"cluster_id": "cluster-id",
 	})
 	result, err := handler(ctx, request)

@@ -20,24 +20,21 @@ type ClusterQueuesClient interface {
 func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_cluster_queues",
 			mcp.WithDescription("List all queues in a cluster with their keys, descriptions, dispatch status, and agent configuration"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("cluster_id",
 				mcp.Required(),
-				mcp.Description("The id of the cluster"),
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Cluster Queues",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "List Cluster Queues",
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListClusterQueues")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -52,13 +49,13 @@ func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler serve
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("cluster_id", clusterID),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			queues, resp, err := client.List(ctx, org, clusterID, &buildkite.ClusterQueuesListOptions{
+			queues, resp, err := client.List(ctx, orgSlug, clusterID, &buildkite.ClusterQueuesListOptions{
 				ListOptions: paginationParams,
 			})
 			if err != nil {
@@ -91,27 +88,23 @@ func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler serve
 func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_cluster_queue",
 			mcp.WithDescription("Get detailed information about a specific queue including its key, description, dispatch status, and hosted agent configuration"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("cluster_id",
 				mcp.Required(),
-				mcp.Description("The id of the cluster"),
 			),
 			mcp.WithString("queue_id",
 				mcp.Required(),
-				mcp.Description("The id of the queue"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Cluster Queue",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Cluster Queue",
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetClusterQueue")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -126,12 +119,12 @@ func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("cluster_id", clusterID),
 				attribute.String("queue_id", queueID),
 			)
 
-			queue, resp, err := client.Get(ctx, org, clusterID, queueID)
+			queue, resp, err := client.Get(ctx, orgSlug, clusterID, queueID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

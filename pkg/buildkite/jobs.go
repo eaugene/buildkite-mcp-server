@@ -39,17 +39,14 @@ func withJobsPagination() mcp.ToolOption {
 func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_jobs",
 			mcp.WithDescription("Get all jobs for a specific build including their state, timing, commands, and execution details"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("job_state",
 				mcp.Description("Filter jobs by state. Supports actual states (scheduled, running, passed, failed, canceled, skipped, etc.)"),
@@ -59,15 +56,14 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			),
 			withJobsPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Jobs",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Jobs",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetJobs")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -89,7 +85,7 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			paginationParams := getClientSidePaginationParams(request)
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("pipeline_slug", pipelineSlug),
 				attribute.String("build_number", buildNumber),
 				attribute.String("job_state", jobStateFilter),
@@ -98,7 +94,7 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			build, resp, err := client.Get(ctx, org, pipelineSlug, buildNumber, &buildkite.BuildGetOptions{})
+			build, resp, err := client.Get(ctx, orgSlug, pipelineSlug, buildNumber, &buildkite.BuildGetOptions{})
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -150,32 +146,28 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_job_logs",
 			mcp.WithDescription("Get the log output and metadata for a specific job, including content, size, and header timestamps. Automatically saves to file for large logs to avoid token limits."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The build number"),
 			),
 			mcp.WithString("job_uuid",
 				mcp.Required(),
 				mcp.Description("The UUID of the job"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Job Logs",
-				ReadOnlyHint: mcp.ToBoolPtr(false),
+				Title: "Get Job Logs",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetJobLogs")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -196,14 +188,14 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("pipeline_slug", pipelineSlug),
 				attribute.String("build_number", buildNumber),
 				attribute.String("job_uuid", jobUUID),
 			)
 
 			// Get job logs from API
-			joblog, resp, err := client.Jobs.GetJobLog(ctx, org, pipelineSlug, buildNumber, jobUUID)
+			joblog, resp, err := client.Jobs.GetJobLog(ctx, orgSlug, pipelineSlug, buildNumber, jobUUID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

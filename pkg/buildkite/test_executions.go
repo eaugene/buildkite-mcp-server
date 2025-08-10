@@ -21,32 +21,28 @@ type TestExecutionsClient interface {
 func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_failed_executions",
 			mcp.WithDescription("Get failed test executions for a specific test run in Buildkite Test Engine. Optionally get the expanded failure details such as full error messages and stack traces."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the test suite"),
 			),
 			mcp.WithString("test_suite_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the test suite the run belongs to"),
 			),
 			mcp.WithString("run_id",
 				mcp.Required(),
-				mcp.Description("The ID of the test run"),
 			),
 			mcp.WithBoolean("include_failure_expanded",
 				mcp.Description("Include the expanded failure details such as full error messages and stack traces. This can be used to explain and diganose the cause of test failures."),
 			),
 			withClientSidePagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Failed Test Executions",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Failed Test Executions",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetFailedExecutions")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -67,7 +63,7 @@ func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handle
 			paginationParams := getClientSidePaginationParams(request)
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("test_suite_slug", testSuiteSlug),
 				attribute.String("run_id", runID),
 				attribute.Bool("include_failure_expanded", includeFailureExpanded),
@@ -79,7 +75,7 @@ func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handle
 				IncludeFailureExpanded: includeFailureExpanded,
 			}
 
-			failedExecutions, resp, err := client.GetFailedExecutions(ctx, org, testSuiteSlug, runID, options)
+			failedExecutions, resp, err := client.GetFailedExecutions(ctx, orgSlug, testSuiteSlug, runID, options)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

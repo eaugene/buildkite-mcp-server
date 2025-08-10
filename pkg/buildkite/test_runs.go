@@ -23,25 +23,22 @@ type TestRunsClient interface {
 func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_test_runs",
 			mcp.WithDescription("List all test runs for a test suite in Buildkite Test Engine"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the test suite"),
 			),
 			mcp.WithString("test_suite_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the test suite"),
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Test Runs",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "List Test Runs",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListTestRuns")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -57,7 +54,7 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("test_suite_slug", testSuiteSlug),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
@@ -67,7 +64,7 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 				ListOptions: paginationParams,
 			}
 
-			testRuns, resp, err := client.List(ctx, org, testSuiteSlug, options)
+			testRuns, resp, err := client.List(ctx, orgSlug, testSuiteSlug, options)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -99,28 +96,24 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_test_run",
 			mcp.WithDescription("Get a specific test run in Buildkite Test Engine"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the test suite"),
 			),
 			mcp.WithString("test_suite_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the test suite"),
 			),
 			mcp.WithString("run_id",
 				mcp.Required(),
-				mcp.Description("The ID of the test run"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Test Run",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Test Run",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetTestRun")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -136,12 +129,12 @@ func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandle
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("test_suite_slug", testSuiteSlug),
 				attribute.String("run_id", runID),
 			)
 
-			testRun, resp, err := client.Get(ctx, org, testSuiteSlug, runID)
+			testRun, resp, err := client.Get(ctx, orgSlug, testSuiteSlug, runID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

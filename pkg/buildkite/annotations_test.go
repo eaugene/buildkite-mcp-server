@@ -51,7 +51,7 @@ func TestListAnnotations(t *testing.T) {
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})

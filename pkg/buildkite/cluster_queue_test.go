@@ -52,7 +52,7 @@ func TestListClusterQueues(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":        "org",
+		"org_slug":   "org",
 		"cluster_id": "cluster-id",
 	})
 	result, err := handler(ctx, request)
@@ -83,7 +83,7 @@ func TestGetClusterQueue(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":        "org",
+		"org_slug":   "org",
 		"cluster_id": "cluster-id",
 		"queue_id":   "queue-id",
 	})

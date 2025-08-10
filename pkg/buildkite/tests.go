@@ -21,28 +21,24 @@ type TestsClient interface {
 func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_test",
 			mcp.WithDescription("Get a specific test in Buildkite Test Engine. This provides additional metadata for failed test executions"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the test suite"),
 			),
 			mcp.WithString("test_suite_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the test suite"),
 			),
 			mcp.WithString("test_id",
 				mcp.Required(),
-				mcp.Description("The ID of the test"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Test",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Test",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetTest")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -58,12 +54,12 @@ func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc)
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("test_suite_slug", testSuiteSlug),
 				attribute.String("test_id", testID),
 			)
 
-			test, resp, err := client.Get(ctx, org, testSuiteSlug, testID)
+			test, resp, err := client.Get(ctx, orgSlug, testSuiteSlug, testID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

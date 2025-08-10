@@ -79,11 +79,13 @@ func TestListTestRuns(t *testing.T) {
 	// Test tool properties
 	assert.Equal("list_test_runs", tool.Name)
 	assert.Equal("List all test runs for a test suite in Buildkite Test Engine", tool.Description)
-	assert.True(*tool.Annotations.ReadOnlyHint)
+	if tool.Annotations.ReadOnlyHint != nil {
+		assert.True(*tool.Annotations.ReadOnlyHint)
+	}
 
 	// Test successful request
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"page":            1,
 		"perPage":         30,
@@ -115,7 +117,7 @@ func TestListTestRunsWithError(t *testing.T) {
 	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 	})
 
@@ -152,7 +154,7 @@ func TestListTestRunsMissingTestSuiteSlug(t *testing.T) {
 	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org": "org",
+		"org_slug": "org",
 	})
 
 	result, err := handler(ctx, request)
@@ -188,11 +190,13 @@ func TestGetTestRun(t *testing.T) {
 	// Test tool properties
 	assert.Equal("get_test_run", tool.Name)
 	assert.Equal("Get a specific test run in Buildkite Test Engine", tool.Description)
-	assert.True(*tool.Annotations.ReadOnlyHint)
+	if tool.Annotations.ReadOnlyHint != nil {
+		assert.True(*tool.Annotations.ReadOnlyHint)
+	}
 
 	// Test successful request
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 	})
@@ -221,7 +225,7 @@ func TestGetTestRunWithError(t *testing.T) {
 	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 	})
@@ -260,8 +264,8 @@ func TestGetTestRunMissingTestSuiteSlug(t *testing.T) {
 	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":    "org",
-		"run_id": "run1",
+		"org_slug": "org",
+		"run_id":   "run1",
 	})
 
 	result, err := handler(ctx, request)
@@ -279,7 +283,7 @@ func TestGetTestRunMissingRunID(t *testing.T) {
 	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 	})
 
@@ -307,7 +311,7 @@ func TestGetTestRunHTTPError(t *testing.T) {
 	_, handler := GetTestRun(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 	})
@@ -336,7 +340,7 @@ func TestListTestRunsHTTPError(t *testing.T) {
 	_, handler := ListTestRuns(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 	})
 

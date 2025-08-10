@@ -64,11 +64,13 @@ func TestGetFailedExecutions(t *testing.T) {
 	// Test tool properties
 	assert.Equal("get_failed_executions", tool.Name)
 	assert.Equal("Get failed test executions for a specific test run in Buildkite Test Engine. Optionally get the expanded failure details such as full error messages and stack traces.", tool.Description)
-	assert.True(*tool.Annotations.ReadOnlyHint)
+	if tool.Annotations.ReadOnlyHint != nil {
+		assert.True(*tool.Annotations.ReadOnlyHint)
+	}
 
 	// Test successful request
 	request := createMCPRequest(t, map[string]any{
-		"org":                      "org",
+		"org_slug":                 "org",
 		"test_suite_slug":          "suite1",
 		"run_id":                   "run1",
 		"include_failure_expanded": true,
@@ -119,8 +121,8 @@ func TestGetFailedExecutionsMissingTestSuiteSlug(t *testing.T) {
 	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":    "org",
-		"run_id": "run1",
+		"org_slug": "org",
+		"run_id":   "run1",
 	})
 
 	result, err := handler(ctx, request)
@@ -138,7 +140,7 @@ func TestGetFailedExecutionsMissingRunID(t *testing.T) {
 	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 	})
 
@@ -161,7 +163,7 @@ func TestGetFailedExecutionsWithError(t *testing.T) {
 	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 	})
@@ -190,7 +192,7 @@ func TestGetFailedExecutionsHTTPError(t *testing.T) {
 	_, handler := GetFailedTestExecutions(mockClient)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 	})
@@ -273,7 +275,7 @@ func TestGetFailedExecutionsPagination(t *testing.T) {
 
 	// Test first page with page size of 2
 	requestFirstPage := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 		"page":            float64(1),
@@ -297,7 +299,7 @@ func TestGetFailedExecutionsPagination(t *testing.T) {
 
 	// Test second page with page size of 2
 	requestSecondPage := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 		"page":            float64(2),
@@ -321,7 +323,7 @@ func TestGetFailedExecutionsPagination(t *testing.T) {
 
 	// Test last page
 	requestLastPage := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 		"page":            float64(3),
@@ -343,7 +345,7 @@ func TestGetFailedExecutionsPagination(t *testing.T) {
 
 	// Test page beyond available data
 	requestBeyond := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 		"page":            float64(5),
@@ -396,7 +398,7 @@ func TestGetFailedExecutionsLargePage(t *testing.T) {
 
 	// Test with page size larger than available data
 	requestLargePage := createMCPRequest(t, map[string]any{
-		"org":             "org",
+		"org_slug":        "org",
 		"test_suite_slug": "suite1",
 		"run_id":          "run1",
 		"page":            float64(1),

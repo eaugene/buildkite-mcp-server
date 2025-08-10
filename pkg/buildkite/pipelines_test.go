@@ -74,7 +74,7 @@ func TestListPipelines(t *testing.T) {
 	request := createMCPRequest(t, map[string]any{})
 
 	args := ListPipelinesArgs{
-		Org: "org",
+		OrgSlug: "org",
 	}
 
 	result, err := handler(ctx, request, args)
@@ -111,7 +111,7 @@ func TestGetPipeline(t *testing.T) {
 	request := createMCPRequest(t, map[string]any{})
 
 	args := GetPipelineArgs{
-		Org:          "org",
+		OrgSlug:      "org",
 		PipelineSlug: "pipeline",
 	}
 

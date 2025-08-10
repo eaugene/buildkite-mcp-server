@@ -19,8 +19,7 @@ func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler s
 	return mcp.NewTool("user_token_organization",
 			mcp.WithDescription("Get the organization associated with the user token used for this request"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Organization for User Token",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Organization for User Token",
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.UserTokenOrganization")

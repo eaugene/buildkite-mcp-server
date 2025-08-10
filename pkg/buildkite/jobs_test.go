@@ -40,7 +40,7 @@ func TestGetJobs(t *testing.T) {
 
 	// Test getting all jobs (no filter) - agent info should be excluded by default
 	requestAll := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})
@@ -100,7 +100,7 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 
 	t.Run("filter by passed state", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"job_state":     "passed",
@@ -126,7 +126,7 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 
 	t.Run("filter by failed state", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"job_state":     "failed",
@@ -152,7 +152,7 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 
 	t.Run("filter by running state", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"job_state":     "running",
@@ -201,7 +201,7 @@ func TestGetJobsMissingParameters(t *testing.T) {
 
 	t.Run("missing pipeline_slug", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":          "org",
+			"org_slug":     "org",
 			"build_number": "1",
 		})
 		result, err := handler(ctx, request)
@@ -215,7 +215,7 @@ func TestGetJobsMissingParameters(t *testing.T) {
 
 	t.Run("missing build_number", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 		})
 		result, err := handler(ctx, request)
@@ -260,7 +260,7 @@ func TestGetJobsPagination(t *testing.T) {
 
 	t.Run("first page", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"page":          float64(1),
@@ -285,7 +285,7 @@ func TestGetJobsPagination(t *testing.T) {
 
 	t.Run("second page", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"page":          float64(2),
@@ -310,7 +310,7 @@ func TestGetJobsPagination(t *testing.T) {
 
 	t.Run("last page", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"page":          float64(3),
@@ -333,7 +333,7 @@ func TestGetJobsPagination(t *testing.T) {
 
 	t.Run("page beyond available data", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"page":          float64(5),
@@ -377,7 +377,7 @@ func TestGetJobsAgentInfo(t *testing.T) {
 
 	t.Run("default behavior excludes detailed agent info", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 		})
@@ -393,7 +393,7 @@ func TestGetJobsAgentInfo(t *testing.T) {
 
 	t.Run("include_agent=false excludes detailed agent info", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"include_agent": false,
@@ -414,7 +414,7 @@ func TestGetJobsAgentInfo(t *testing.T) {
 
 	t.Run("include_agent=true includes detailed agent info", func(t *testing.T) {
 		request := createMCPRequest(t, map[string]any{
-			"org":           "org",
+			"org_slug":      "org",
 			"pipeline_slug": "pipeline",
 			"build_number":  "1",
 			"include_agent": true,
@@ -466,7 +466,7 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 
 	// Test pagination with state filter - should have 4 "passed" jobs total
 	requestPassedPaginated := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 		"job_state":     "passed",
@@ -516,7 +516,7 @@ func TestGetJobLogs(t *testing.T) {
 
 		// Test missing pipeline_slug parameter
 		req = createMCPRequest(t, map[string]any{
-			"org":          "test-org",
+			"org_slug":     "test-org",
 			"build_number": "123",
 			"job_uuid":     "job-123",
 		})
@@ -527,7 +527,7 @@ func TestGetJobLogs(t *testing.T) {
 
 		// Test missing build_number parameter
 		req = createMCPRequest(t, map[string]any{
-			"org":           "test-org",
+			"org_slug":      "test-org",
 			"pipeline_slug": "test-pipeline",
 			"job_uuid":      "job-123",
 		})
@@ -538,7 +538,7 @@ func TestGetJobLogs(t *testing.T) {
 
 		// Test missing job_uuid parameter
 		req = createMCPRequest(t, map[string]any{
-			"org":           "test-org",
+			"org_slug":      "test-org",
 			"pipeline_slug": "test-pipeline",
 			"build_number":  "123",
 		})

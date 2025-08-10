@@ -56,7 +56,7 @@ type BuildWithSummary struct {
 
 // ListBuildsArgs struct with enhanced filtering
 type ListBuildsArgs struct {
-	Org          string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	Branch       string `json:"branch"`       // existing
 	State        string `json:"state"`        // NEW: running, passed, failed, etc.
@@ -69,7 +69,7 @@ type ListBuildsArgs struct {
 
 // GetBuildArgs struct
 type GetBuildArgs struct {
-	Org          string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	BuildNumber  string `json:"build_number"`
 	DetailLevel  string `json:"detail_level"` // summary, detailed, full
@@ -77,7 +77,7 @@ type GetBuildArgs struct {
 
 // GetBuildTestEngineRunsArgs struct
 type GetBuildTestEngineRunsArgs struct {
-	Org          string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	BuildNumber  string `json:"build_number"`
 }
@@ -142,13 +142,11 @@ func createPaginatedBuildResult[T any](builds []buildkite.Build, converter func(
 func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListBuildsArgs]) {
 	return mcp.NewTool("list_builds",
 			mcp.WithDescription("List all builds for a pipeline with their status, commit information, and metadata"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("branch",
 				mcp.Description("Filter builds by git branch name"),
@@ -172,8 +170,7 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 				mcp.Description("Results per page for pagination (min 1, max 100)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "List Builds",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "List Builds",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args ListBuildsArgs) (*mcp.CallToolResult, error) {
@@ -181,15 +178,15 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 			defer span.End()
 
 			// Validate required parameters
-			if args.Org == "" {
-				return mcp.NewToolResultError("org parameter is required"), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
 			}
 
 			span.SetAttributes(
-				attribute.String("org", args.Org),
+				attribute.String("org_slug", args.OrgSlug),
 				attribute.String("pipeline_slug", args.PipelineSlug),
 				attribute.String("branch", args.Branch),
 				attribute.String("state", args.State),
@@ -251,7 +248,7 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 				options.Creator = args.Creator
 			}
 
-			builds, resp, err := client.ListByPipeline(ctx, args.Org, args.PipelineSlug, options)
+			builds, resp, err := client.ListByPipeline(ctx, args.OrgSlug, args.PipelineSlug, options)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
@@ -292,21 +289,17 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildTestEngineRunsArgs]) {
 	return mcp.NewTool("get_build_test_engine_runs",
 			mcp.WithDescription("Get test engine runs data for a specific build in Buildkite. This can be used to look up Test Runs."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The number of the build"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Build Test Engine Runs",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Build Test Engine Runs",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildTestEngineRunsArgs) (*mcp.CallToolResult, error) {
@@ -314,8 +307,8 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 			defer span.End()
 
 			// Validate required parameters
-			if args.Org == "" {
-				return mcp.NewToolResultError("org parameter is required"), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
@@ -325,12 +318,12 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 			}
 
 			span.SetAttributes(
-				attribute.String("org", args.Org),
+				attribute.String("org_slug", args.OrgSlug),
 				attribute.String("pipeline_slug", args.PipelineSlug),
 				attribute.String("build_number", args.BuildNumber),
 			)
 
-			build, _, err := client.Get(ctx, args.Org, args.PipelineSlug, args.BuildNumber, &buildkite.BuildGetOptions{
+			build, _, err := client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, &buildkite.BuildGetOptions{
 				IncludeTestEngine: true,
 			})
 			if err != nil {
@@ -362,24 +355,20 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildArgs]) {
 	return mcp.NewTool("get_build",
 			mcp.WithDescription("Get detailed information about a specific build including its jobs, timing, and execution details"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("detail_level",
 				mcp.Description("Response detail level: 'summary' (essential fields), 'detailed' (medium detail), or 'full' (complete build data). Default: 'detailed'"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Build",
-				ReadOnlyHint: mcp.ToBoolPtr(true),
+				Title: "Get Build",
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildArgs) (*mcp.CallToolResult, error) {
@@ -387,8 +376,8 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 			defer span.End()
 
 			// Validate required parameters
-			if args.Org == "" {
-				return mcp.NewToolResultError("org parameter is required"), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
@@ -398,7 +387,7 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 			}
 
 			span.SetAttributes(
-				attribute.String("org", args.Org),
+				attribute.String("org_slug", args.OrgSlug),
 				attribute.String("pipeline_slug", args.PipelineSlug),
 				attribute.String("build_number", args.BuildNumber),
 				attribute.String("detail_level", args.DetailLevel),
@@ -415,7 +404,7 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 				IncludeTestEngine: true,
 			}
 
-			build, _, err := client.Get(ctx, args.Org, args.PipelineSlug, args.BuildNumber, options)
+			build, _, err := client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, options)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
@@ -468,11 +457,9 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 			mcp.WithDescription("Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information"),
 			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("commit",
 				mcp.Required(),
@@ -494,11 +481,11 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 						"properties": map[string]any{
 							"key": map[string]any{
 								"type":        "string",
-								"description": "The name of the environment variable",
+								"description": "The environment variable name",
 							},
 							"value": map[string]any{
 								"type":        "string",
-								"description": "The value of the environment variable",
+								"description": "The environment variable value",
 							},
 						},
 					},
@@ -512,11 +499,11 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 						"properties": map[string]any{
 							"key": map[string]any{
 								"type":        "string",
-								"description": "The key of the meta-data item",
+								"description": "The meta-data item key",
 							},
 							"value": map[string]any{
 								"type":        "string",
-								"description": "The value of the meta-data item",
+								"description": "The meta-data item value",
 							},
 						},
 					},

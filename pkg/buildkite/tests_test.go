@@ -52,12 +52,12 @@ func TestGetTest(t *testing.T) {
 
 	// Test required parameters
 	params := tool.InputSchema.Properties
-	assert.Contains(params, "org")
+	assert.Contains(params, "org_slug")
 	assert.Contains(params, "test_suite_slug")
 	assert.Contains(params, "test_id")
 
 	// Verify org is required
-	orgParam := params["org"].(map[string]interface{})
+	orgParam := params["org_slug"].(map[string]interface{})
 	assert.Equal("string", orgParam["type"])
 
 	// Verify test_suite_slug is required
