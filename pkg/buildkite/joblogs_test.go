@@ -121,7 +121,7 @@ func TestSearchLogsHandler(t *testing.T) {
 			JobLogsBaseParams: JobLogsBaseParams{
 				OrgSlug:      "test-org",
 				PipelineSlug: "test-pipeline",
-				BuildNo:      "123",
+				BuildNumber:  "123",
 				JobID:        "job-456",
 			},
 			Pattern: "[", // Invalid regex
@@ -147,7 +147,7 @@ func TestSearchLogsHandler(t *testing.T) {
 			JobLogsBaseParams: JobLogsBaseParams{
 				OrgSlug:      "test-org",
 				PipelineSlug: "test-pipeline",
-				BuildNo:      "123",
+				BuildNumber:  "123",
 				JobID:        "job-456",
 			},
 			Pattern: "error",
@@ -178,7 +178,7 @@ func TestTailLogsHandler(t *testing.T) {
 			JobLogsBaseParams: JobLogsBaseParams{
 				OrgSlug:      "test-org",
 				PipelineSlug: "test-pipeline",
-				BuildNo:      "123",
+				BuildNumber:  "123",
 				JobID:        "job-456",
 			},
 			Tail: 0, // Should default to 10
@@ -208,7 +208,7 @@ func TestGetLogsInfoHandler(t *testing.T) {
 	params := JobLogsBaseParams{
 		OrgSlug:      "test-org",
 		PipelineSlug: "test-pipeline",
-		BuildNo:      "123",
+		BuildNumber:  "123",
 		JobID:        "job-456",
 	}
 
@@ -236,7 +236,7 @@ func TestReadLogsHandler(t *testing.T) {
 		JobLogsBaseParams: JobLogsBaseParams{
 			OrgSlug:      "test-org",
 			PipelineSlug: "test-pipeline",
-			BuildNo:      "123",
+			BuildNumber:  "123",
 			JobID:        "job-456",
 		},
 		Seek:  0,
@@ -271,7 +271,7 @@ func TestNewParquetReader(t *testing.T) {
 		params := JobLogsBaseParams{
 			OrgSlug:      "test-org",
 			PipelineSlug: "test-pipeline",
-			BuildNo:      "123",
+			BuildNumber:  "123",
 			JobID:        "job-456",
 			CacheTTL:     "5m",
 			ForceRefresh: true,
@@ -294,7 +294,7 @@ func TestNewParquetReader(t *testing.T) {
 		params := JobLogsBaseParams{
 			OrgSlug:      "test-org",
 			PipelineSlug: "test-pipeline",
-			BuildNo:      "123",
+			BuildNumber:  "123",
 			JobID:        "job-456",
 		}
 

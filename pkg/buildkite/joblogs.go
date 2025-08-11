@@ -26,7 +26,7 @@ var _ BuildkiteLogsClient = (*buildkitelogs.Client)(nil)
 type JobLogsBaseParams struct {
 	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
-	BuildNo      string `json:"build_no"`
+	BuildNumber  string `json:"build_number"`
 	JobID        string `json:"job_id"`
 	CacheTTL     string `json:"cache_ttl"`
 	ForceRefresh bool   `json:"force_refresh"`
@@ -87,7 +87,7 @@ func newParquetReader(ctx context.Context, client BuildkiteLogsClient, params Jo
 	ttl := parseCacheTTL(params.CacheTTL)
 
 	// Download and cache the logs using injected client
-	cacheFilePath, err := client.DownloadAndCache(ctx, params.OrgSlug, params.PipelineSlug, params.BuildNo, params.JobID, ttl, params.ForceRefresh)
+	cacheFilePath, err := client.DownloadAndCache(ctx, params.OrgSlug, params.PipelineSlug, params.BuildNumber, params.JobID, ttl, params.ForceRefresh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download/cache logs: %w", err)
 	}
@@ -141,7 +141,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
 			),
-			mcp.WithString("build_no",
+			mcp.WithString("build_number",
 				mcp.Required(),
 			),
 			mcp.WithString("job_id",
@@ -210,7 +210,7 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 			span.SetAttributes(
 				attribute.String("org_slug", params.OrgSlug),
 				attribute.String("pipeline_slug", params.PipelineSlug),
-				attribute.String("build_no", params.BuildNo),
+				attribute.String("build_number", params.BuildNumber),
 				attribute.String("job_id", params.JobID),
 				attribute.String("pattern", params.Pattern),
 				attribute.Int("context", params.Context),
@@ -285,7 +285,7 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
 			),
-			mcp.WithString("build_no",
+			mcp.WithString("build_number",
 				mcp.Required(),
 			),
 			mcp.WithString("job_id",
@@ -330,7 +330,7 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			span.SetAttributes(
 				attribute.String("org_slug", params.OrgSlug),
 				attribute.String("pipeline_slug", params.PipelineSlug),
-				attribute.String("build_no", params.BuildNo),
+				attribute.String("build_number", params.BuildNumber),
 				attribute.String("job_id", params.JobID),
 				attribute.Int("tail", params.Tail),
 			)
@@ -390,7 +390,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
 			),
-			mcp.WithString("build_no",
+			mcp.WithString("build_number",
 				mcp.Required(),
 			),
 			mcp.WithString("job_id",
@@ -419,7 +419,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			span.SetAttributes(
 				attribute.String("org_slug", params.OrgSlug),
 				attribute.String("pipeline_slug", params.PipelineSlug),
-				attribute.String("build_no", params.BuildNo),
+				attribute.String("build_number", params.BuildNumber),
 				attribute.String("job_id", params.JobID),
 			)
 
@@ -436,7 +436,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			}
 
 			// Get cache file path
-			cacheFile, err := buildkitelogs.GetCacheFilePath(params.OrgSlug, params.PipelineSlug, params.BuildNo, params.JobID)
+			cacheFile, err := buildkitelogs.GetCacheFilePath(params.OrgSlug, params.PipelineSlug, params.BuildNumber, params.JobID)
 			if err != nil {
 				return mcp.NewToolResultError(fmt.Sprintf("Failed to get cache file path: %v", err)), nil
 			}
@@ -472,7 +472,7 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
 			),
-			mcp.WithString("build_no",
+			mcp.WithString("build_number",
 				mcp.Required(),
 			),
 			mcp.WithString("job_id",
@@ -507,7 +507,7 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			span.SetAttributes(
 				attribute.String("org_slug", params.OrgSlug),
 				attribute.String("pipeline_slug", params.PipelineSlug),
-				attribute.String("build_no", params.BuildNo),
+				attribute.String("build_number", params.BuildNumber),
 				attribute.String("job_id", params.JobID),
 				attribute.Int("seek", params.Seek),
 				attribute.Int("limit", params.Limit),
