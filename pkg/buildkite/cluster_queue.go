@@ -28,7 +28,8 @@ func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler serve
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Cluster Queues",
+				Title:        "List Cluster Queues",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListClusterQueues")
@@ -98,7 +99,8 @@ func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Cluster Queue",
+				Title:        "Get Cluster Queue",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetClusterQueue")

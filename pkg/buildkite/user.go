@@ -19,7 +19,8 @@ func CurrentUser(client UserClient) (tool mcp.Tool, handler server.ToolHandlerFu
 	return mcp.NewTool("current_user",
 			mcp.WithDescription("Get details about the user account that owns the API token, including name, email, avatar, and account creation date"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Current User",
+				Title:        "Get Current User",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.CurrentUser")

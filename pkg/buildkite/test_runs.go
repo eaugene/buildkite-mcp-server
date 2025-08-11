@@ -31,7 +31,8 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Test Runs",
+				Title:        "List Test Runs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -106,7 +107,8 @@ func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandle
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Test Run",
+				Title:        "Get Test Run",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

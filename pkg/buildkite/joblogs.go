@@ -197,7 +197,8 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 				mcp.Description("Force refresh cached entry (default: false)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Search Logs",
+				Title:        "Search Logs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, params SearchLogsParams) (*mcp.CallToolResult, error) {
@@ -311,7 +312,8 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				mcp.Description("Force refresh cached entry (default: false)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Tail Logs",
+				Title:        "Tail Logs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, params TailLogsParams) (*mcp.CallToolResult, error) {
@@ -404,7 +406,8 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 				mcp.Description("Force refresh cached entry (default: false)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Logs Info",
+				Title:        "Get Logs Info",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, params JobLogsBaseParams) (*mcp.CallToolResult, error) {
@@ -491,7 +494,8 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				mcp.Description("Force refresh cached entry (default: false)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Read Logs",
+				Title:        "Read Logs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, params ReadLogsParams) (*mcp.CallToolResult, error) {

@@ -86,7 +86,8 @@ func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHa
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Artifact List",
+				Title:        "Artifact List",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -158,7 +159,8 @@ func GetArtifact(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHand
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Artifact",
+				Title:        "Get Artifact",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

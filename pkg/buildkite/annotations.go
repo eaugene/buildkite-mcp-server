@@ -34,7 +34,8 @@ func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.To
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Annotations",
+				Title:        "List Annotations",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListAnnotations")

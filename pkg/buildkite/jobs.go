@@ -56,7 +56,8 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			),
 			withJobsPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Jobs",
+				Title:        "Get Jobs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -160,7 +161,8 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 				mcp.Description("The UUID of the job"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Job Logs",
+				Title:        "Get Job Logs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

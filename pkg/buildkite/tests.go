@@ -31,7 +31,8 @@ func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc)
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Test",
+				Title:        "Get Test",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

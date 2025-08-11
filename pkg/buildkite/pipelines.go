@@ -46,7 +46,8 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Pipelines",
+				Title:        "List Pipelines",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest, args ListPipelinesArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListPipelines")
@@ -135,7 +136,8 @@ func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHa
 				mcp.Description("Response detail level: 'summary', 'detailed', or 'full' (default)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Pipeline",
+				Title:        "Get Pipeline",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args GetPipelineArgs) (*mcp.CallToolResult, error) {

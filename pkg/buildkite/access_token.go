@@ -19,7 +19,8 @@ func AccessToken(client AccessTokenClient) (tool mcp.Tool, handler server.ToolHa
 	return mcp.NewTool("access_token",
 			mcp.WithDescription("Get information about the current API access token including its scopes and UUID"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Access Token",
+				Title:        "Get Access Token",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.AccessToken")

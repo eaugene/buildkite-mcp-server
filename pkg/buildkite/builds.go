@@ -170,7 +170,8 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 				mcp.Description("Results per page for pagination (min 1, max 100)"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Builds",
+				Title:        "List Builds",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args ListBuildsArgs) (*mcp.CallToolResult, error) {
@@ -299,7 +300,8 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Build Test Engine Runs",
+				Title:        "Get Build Test Engine Runs",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildTestEngineRunsArgs) (*mcp.CallToolResult, error) {
@@ -368,7 +370,8 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 				mcp.Description("Response detail level: 'summary' (essential fields), 'detailed' (medium detail), or 'full' (complete build data). Default: 'detailed'"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Build",
+				Title:        "Get Build",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest, args GetBuildArgs) (*mcp.CallToolResult, error) {

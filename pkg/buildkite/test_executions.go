@@ -35,7 +35,8 @@ func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handle
 			),
 			withClientSidePagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Failed Test Executions",
+				Title:        "Get Failed Test Executions",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

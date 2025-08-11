@@ -25,7 +25,8 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "List Clusters",
+				Title:        "List Clusters",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.ListClusters")
@@ -86,7 +87,8 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 				mcp.Required(),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title: "Get Cluster",
+				Title:        "Get Cluster",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetCluster")
