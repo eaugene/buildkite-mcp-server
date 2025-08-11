@@ -20,9 +20,8 @@ type ClustersClient interface {
 func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_clusters",
 			mcp.WithDescription("List all clusters in an organization with their names, descriptions, default queues, and creation details"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			withPagination(),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
@@ -33,7 +32,7 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 			ctx, span := trace.Start(ctx, "buildkite.ListClusters")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -43,12 +42,12 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			clusters, resp, err := client.List(ctx, org, &buildkite.ClustersListOptions{
+			clusters, resp, err := client.List(ctx, orgSlug, &buildkite.ClustersListOptions{
 				ListOptions: paginationParams,
 			})
 			if err != nil {
@@ -81,13 +80,11 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("get_cluster",
 			mcp.WithDescription("Get detailed information about a specific cluster including its name, description, default queue, and configuration"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("cluster_id",
 				mcp.Required(),
-				mcp.Description("The id of the cluster"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Get Cluster",
@@ -97,7 +94,7 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 			ctx, span := trace.Start(ctx, "buildkite.GetCluster")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -107,11 +104,11 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("cluster_id", clusterID),
 			)
 
-			cluster, resp, err := client.Get(ctx, org, clusterID)
+			cluster, resp, err := client.Get(ctx, orgSlug, clusterID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

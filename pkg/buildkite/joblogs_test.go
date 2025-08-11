@@ -119,10 +119,10 @@ func TestSearchLogsHandler(t *testing.T) {
 	t.Run("invalid regex pattern", func(t *testing.T) {
 		params := SearchLogsParams{
 			JobLogsBaseParams: JobLogsBaseParams{
-				Org:      "test-org",
-				Pipeline: "test-pipeline",
-				Build:    "123",
-				Job:      "job-456",
+				OrgSlug:      "test-org",
+				PipelineSlug: "test-pipeline",
+				BuildNumber:  "123",
+				JobID:        "job-456",
 			},
 			Pattern: "[", // Invalid regex
 		}
@@ -145,10 +145,10 @@ func TestSearchLogsHandler(t *testing.T) {
 
 		params := SearchLogsParams{
 			JobLogsBaseParams: JobLogsBaseParams{
-				Org:      "test-org",
-				Pipeline: "test-pipeline",
-				Build:    "123",
-				Job:      "job-456",
+				OrgSlug:      "test-org",
+				PipelineSlug: "test-pipeline",
+				BuildNumber:  "123",
+				JobID:        "job-456",
 			},
 			Pattern: "error",
 		}
@@ -176,10 +176,10 @@ func TestTailLogsHandler(t *testing.T) {
 	t.Run("default tail value", func(t *testing.T) {
 		params := TailLogsParams{
 			JobLogsBaseParams: JobLogsBaseParams{
-				Org:      "test-org",
-				Pipeline: "test-pipeline",
-				Build:    "123",
-				Job:      "job-456",
+				OrgSlug:      "test-org",
+				PipelineSlug: "test-pipeline",
+				BuildNumber:  "123",
+				JobID:        "job-456",
 			},
 			Tail: 0, // Should default to 10
 		}
@@ -206,10 +206,10 @@ func TestGetLogsInfoHandler(t *testing.T) {
 	_, handler := GetLogsInfo(mockClient)
 
 	params := JobLogsBaseParams{
-		Org:      "test-org",
-		Pipeline: "test-pipeline",
-		Build:    "123",
-		Job:      "job-456",
+		OrgSlug:      "test-org",
+		PipelineSlug: "test-pipeline",
+		BuildNumber:  "123",
+		JobID:        "job-456",
 	}
 
 	// This will fail due to the parquet file not existing, but we can test the flow
@@ -234,10 +234,10 @@ func TestReadLogsHandler(t *testing.T) {
 
 	params := ReadLogsParams{
 		JobLogsBaseParams: JobLogsBaseParams{
-			Org:      "test-org",
-			Pipeline: "test-pipeline",
-			Build:    "123",
-			Job:      "job-456",
+			OrgSlug:      "test-org",
+			PipelineSlug: "test-pipeline",
+			BuildNumber:  "123",
+			JobID:        "job-456",
 		},
 		Seek:  0,
 		Limit: 100,
@@ -269,10 +269,10 @@ func TestNewParquetReader(t *testing.T) {
 		}
 
 		params := JobLogsBaseParams{
-			Org:          "test-org",
-			Pipeline:     "test-pipeline",
-			Build:        "123",
-			Job:          "job-456",
+			OrgSlug:      "test-org",
+			PipelineSlug: "test-pipeline",
+			BuildNumber:  "123",
+			JobID:        "job-456",
 			CacheTTL:     "5m",
 			ForceRefresh: true,
 		}
@@ -292,10 +292,10 @@ func TestNewParquetReader(t *testing.T) {
 		}
 
 		params := JobLogsBaseParams{
-			Org:      "test-org",
-			Pipeline: "test-pipeline",
-			Build:    "123",
-			Job:      "job-456",
+			OrgSlug:      "test-org",
+			PipelineSlug: "test-pipeline",
+			BuildNumber:  "123",
+			JobID:        "job-456",
 		}
 
 		reader, err := newParquetReader(ctx, mockClient, params)

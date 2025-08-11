@@ -76,17 +76,14 @@ func (a *BuildkiteClientAdapter) rewriteArtifactURL(inputURL string) string {
 func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
 	return mcp.NewTool("list_artifacts",
 			mcp.WithDescription("List all artifacts for a build across all jobs, including file details, paths, sizes, MIME types, and download URLs"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The build number"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Artifact List",
@@ -97,7 +94,7 @@ func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHa
 			ctx, span := trace.Start(ctx, "buildkite.ListArtifacts")
 			defer span.End()
 
-			org, err := request.RequireString("org")
+			orgSlug, err := request.RequireString("org_slug")
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -118,14 +115,14 @@ func ListArtifacts(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHa
 			}
 
 			span.SetAttributes(
-				attribute.String("org", org),
+				attribute.String("org_slug", orgSlug),
 				attribute.String("pipeline_slug", pipelineSlug),
 				attribute.String("build_number", buildNumber),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			artifacts, resp, err := client.ListByBuild(ctx, org, pipelineSlug, buildNumber, &buildkite.ArtifactListOptions{
+			artifacts, resp, err := client.ListByBuild(ctx, orgSlug, pipelineSlug, buildNumber, &buildkite.ArtifactListOptions{
 				ListOptions: paginationParams,
 			})
 			if err != nil {
@@ -160,7 +157,6 @@ func GetArtifact(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHand
 			mcp.WithDescription("Get detailed information about a specific artifact including its metadata, file size, SHA-1 hash, and download URL"),
 			mcp.WithString("url",
 				mcp.Required(),
-				mcp.Description("The URL of the artifact to get"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Get Artifact",

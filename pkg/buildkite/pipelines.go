@@ -21,7 +21,7 @@ type PipelinesClient interface {
 }
 
 type ListPipelinesArgs struct {
-	Org         string `json:"org"`
+	OrgSlug     string `json:"org_slug"`
 	Name        string `json:"name"`
 	Repository  string `json:"repository"`
 	Page        int    `json:"page"`
@@ -32,9 +32,8 @@ type ListPipelinesArgs struct {
 func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListPipelinesArgs]) {
 	return mcp.NewTool("list_pipelines",
 			mcp.WithDescription("List all pipelines in an organization with their basic details, build counts, and current status"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("name",
 				mcp.Description("Filter pipelines by name"),
@@ -54,8 +53,8 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 			ctx, span := trace.Start(ctx, "buildkite.ListPipelines")
 			defer span.End()
 
-			if args.Org == "" {
-				return mcp.NewToolResultError("org is required"), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug is required"), nil
 			}
 
 			// Set defaults
@@ -70,7 +69,7 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 			}
 
 			span.SetAttributes(
-				attribute.String("org", args.Org),
+				attribute.String("org_slug", args.OrgSlug),
 				attribute.String("name_filter", args.Name),
 				attribute.String("repository_filter", args.Repository),
 				attribute.String("detail_level", args.DetailLevel),
@@ -78,7 +77,7 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 				attribute.Int("per_page", args.PerPage),
 			)
 
-			pipelines, resp, err := client.List(ctx, args.Org, &buildkite.PipelineListOptions{
+			pipelines, resp, err := client.List(ctx, args.OrgSlug, &buildkite.PipelineListOptions{
 				ListOptions: buildkite.ListOptions{
 					Page:    args.Page,
 					PerPage: args.PerPage,
@@ -119,7 +118,7 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 }
 
 type GetPipelineArgs struct {
-	Org          string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	DetailLevel  string `json:"detail_level"` // "summary", "detailed", "full"
 }
@@ -127,13 +126,11 @@ type GetPipelineArgs struct {
 func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetPipelineArgs]) {
 	return mcp.NewTool("get_pipeline",
 			mcp.WithDescription("Get detailed information about a specific pipeline including its configuration, steps, environment variables, and build statistics"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("detail_level",
 				mcp.Description("Response detail level: 'summary', 'detailed', or 'full' (default)"),
@@ -147,8 +144,8 @@ func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHa
 			ctx, span := trace.Start(ctx, "buildkite.GetPipeline")
 			defer span.End()
 
-			if args.Org == "" {
-				return mcp.NewToolResultError("org is required"), nil
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug is required"), nil
@@ -160,12 +157,12 @@ func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHa
 			}
 
 			span.SetAttributes(
-				attribute.String("org", args.Org),
+				attribute.String("org_slug", args.OrgSlug),
 				attribute.String("pipeline_slug", args.PipelineSlug),
 				attribute.String("detail_level", args.DetailLevel),
 			)
 
-			pipeline, _, err := client.Get(ctx, args.Org, args.PipelineSlug)
+			pipeline, _, err := client.Get(ctx, args.OrgSlug, args.PipelineSlug)
 			if err != nil {
 				var errResp *buildkite.ErrorResponse
 				if errors.As(err, &errResp) {
@@ -299,27 +296,22 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 			mcp.WithDescription("Set up a new CI/CD pipeline in Buildkite with YAML configuration, repository connection, and cluster assignment"),
 			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline. This is used to determine where to create the pipeline"),
+				mcp.Description("The organization slug"),
 			),
 			mcp.WithString("name",
 				mcp.Required(),
-				mcp.Description("The name of the pipeline"),
 			),
 			mcp.WithString("repository_url",
 				mcp.Required(),
-				mcp.Description("The Git repository URL to use for the pipeline"),
 			),
 			mcp.WithString("cluster_id",
 				mcp.Required(),
-				mcp.Description("The ID value of the cluster the pipeline will be associated with"),
 			),
 			mcp.WithString("configuration",
 				mcp.Required(),
 				mcp.Description("The pipeline configuration in YAML format. Contains the build steps and pipeline settings. If not provided, a basic configuration will be used"),
 			),
-			mcp.WithString("description",
-				mcp.Description("The description of the pipeline"),
-			),
+			mcp.WithString("description"),
 			mcp.WithString("default_branch",
 				mcp.Description("The default branch for builds and metrics filtering"),
 			),
@@ -426,27 +418,19 @@ func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[
 			mcp.WithDescription("Modify an existing Buildkite pipeline's configuration, repository, settings, or metadata"),
 			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline. This is used to determine where to update the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline to update"),
 			),
-			mcp.WithString("name",
-				mcp.Description("The name of the pipeline"),
-			),
+			mcp.WithString("name"),
 			mcp.WithString("repository_url",
 				mcp.Description("The Git repository URL to use for the pipeline"),
 			),
-			mcp.WithString("cluster_id",
-				mcp.Description("The ID value of the cluster the pipeline will be associated with"),
-			),
+			mcp.WithString("cluster_id"),
 			mcp.WithString("configuration",
 				mcp.Description("The pipeline configuration in YAML format. Contains the build steps and pipeline settings. If not provided, the existing configuration will be used"),
 			),
-			mcp.WithString("description",
-				mcp.Description("The description of the pipeline"),
-			),
+			mcp.WithString("description"),
 			mcp.WithString("default_branch",
 				mcp.Description("The default branch for builds and metrics filtering"),
 			),

@@ -66,7 +66,7 @@ func TestGetBuildDefault(t *testing.T) {
 
 	// Test default behavior - jobs always excluded, summary always included
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})
@@ -115,7 +115,7 @@ func TestGetBuildWithJobSummary(t *testing.T) {
 
 	// Test behavior - jobs always excluded, summary always shown
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})
@@ -158,7 +158,7 @@ func TestListBuilds(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 	})
 	result, err := handler(ctx, request)
@@ -211,7 +211,7 @@ func TestListBuildsWithCustomPagination(t *testing.T) {
 
 	// Test with custom pagination parameters
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"page":          float64(3),
 		"per_page":      float64(50),
@@ -256,7 +256,7 @@ func TestListBuildsWithBranchFilter(t *testing.T) {
 
 	// Test with branch filter
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"branch":        "main",
 	})
@@ -317,7 +317,7 @@ func TestGetBuildTestEngineRuns(t *testing.T) {
 
 	// Test successful request
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})
@@ -354,7 +354,7 @@ func TestGetBuildTestEngineRunsNoBuildTestEngine(t *testing.T) {
 	handler := mcp.NewTypedToolHandler(typedHandler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 		"build_number":  "1",
 	})
@@ -383,11 +383,11 @@ func TestGetBuildTestEngineRunsMissingParameters(t *testing.T) {
 	result, err := handler(ctx, request)
 	assert.NoError(err)
 	assert.True(result.IsError)
-	assert.Contains(result.Content[0].(mcp.TextContent).Text, "org")
+	assert.Contains(result.Content[0].(mcp.TextContent).Text, "org_slug")
 
 	// Test missing pipeline_slug parameter
 	request = createMCPRequest(t, map[string]any{
-		"org":          "org",
+		"org_slug":     "org",
 		"build_number": "1",
 	})
 	result, err = handler(ctx, request)
@@ -397,7 +397,7 @@ func TestGetBuildTestEngineRunsMissingParameters(t *testing.T) {
 
 	// Test missing build_number parameter
 	request = createMCPRequest(t, map[string]any{
-		"org":           "org",
+		"org_slug":      "org",
 		"pipeline_slug": "pipeline",
 	})
 	result, err = handler(ctx, request)

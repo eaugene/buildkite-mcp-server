@@ -24,10 +24,10 @@ var _ BuildkiteLogsClient = (*buildkitelogs.Client)(nil)
 
 // Common parameter structures for log tools
 type JobLogsBaseParams struct {
-	Org          string `json:"org"`
-	Pipeline     string `json:"pipeline"`
-	Build        string `json:"build"`
-	Job          string `json:"job"`
+	OrgSlug      string `json:"org_slug"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+	JobID        string `json:"job_id"`
 	CacheTTL     string `json:"cache_ttl"`
 	ForceRefresh bool   `json:"force_refresh"`
 }
@@ -87,7 +87,7 @@ func newParquetReader(ctx context.Context, client BuildkiteLogsClient, params Jo
 	ttl := parseCacheTTL(params.CacheTTL)
 
 	// Download and cache the logs using injected client
-	cacheFilePath, err := client.DownloadAndCache(ctx, params.Org, params.Pipeline, params.Build, params.Job, ttl, params.ForceRefresh)
+	cacheFilePath, err := client.DownloadAndCache(ctx, params.OrgSlug, params.PipelineSlug, params.BuildNumber, params.JobID, ttl, params.ForceRefresh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download/cache logs: %w", err)
 	}
@@ -135,21 +135,17 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry) any {
 func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
 	return mcp.NewTool("search_logs",
 			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("Buildkite organization slug"),
 			),
-			mcp.WithString("pipeline",
+			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("Pipeline slug"),
 			),
-			mcp.WithString("build",
+			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("Build number or UUID"),
 			),
-			mcp.WithString("job",
+			mcp.WithString("job_id",
 				mcp.Required(),
-				mcp.Description("Job ID"),
 			),
 			mcp.WithString("pattern",
 				mcp.Required(),
@@ -212,10 +208,10 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 			startTime := time.Now()
 
 			span.SetAttributes(
-				attribute.String("org", params.Org),
-				attribute.String("pipeline", params.Pipeline),
-				attribute.String("build", params.Build),
-				attribute.String("job", params.Job),
+				attribute.String("org_slug", params.OrgSlug),
+				attribute.String("pipeline_slug", params.PipelineSlug),
+				attribute.String("build_number", params.BuildNumber),
+				attribute.String("job_id", params.JobID),
 				attribute.String("pattern", params.Pattern),
 				attribute.Int("context", params.Context),
 				attribute.Bool("case_sensitive", params.CaseSensitive),
@@ -283,21 +279,17 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
 	return mcp.NewTool("tail_logs",
 			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("Buildkite organization slug"),
 			),
-			mcp.WithString("pipeline",
+			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("Pipeline slug"),
 			),
-			mcp.WithString("build",
+			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("Build number or UUID"),
 			),
-			mcp.WithString("job",
+			mcp.WithString("job_id",
 				mcp.Required(),
-				mcp.Description("Job ID"),
 			),
 			mcp.WithNumber("tail",
 				mcp.Description("Number of lines to show from end (default: 10)"),
@@ -336,10 +328,10 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			}
 
 			span.SetAttributes(
-				attribute.String("org", params.Org),
-				attribute.String("pipeline", params.Pipeline),
-				attribute.String("build", params.Build),
-				attribute.String("job", params.Job),
+				attribute.String("org_slug", params.OrgSlug),
+				attribute.String("pipeline_slug", params.PipelineSlug),
+				attribute.String("build_number", params.BuildNumber),
+				attribute.String("job_id", params.JobID),
 				attribute.Int("tail", params.Tail),
 			)
 
@@ -392,21 +384,17 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[JobLogsBaseParams]) {
 	return mcp.NewTool("get_logs_info",
 			mcp.WithDescription("Get metadata and statistics about the Parquet log file. 📊 RECOMMENDED as first step - check file size before reading large logs to plan your approach efficiently."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("Buildkite organization slug"),
 			),
-			mcp.WithString("pipeline",
+			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("Pipeline slug"),
 			),
-			mcp.WithString("build",
+			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("Build number or UUID"),
 			),
-			mcp.WithString("job",
+			mcp.WithString("job_id",
 				mcp.Required(),
-				mcp.Description("Job ID"),
 			),
 			mcp.WithString("format",
 				mcp.Description(`Output format - "text", "json", or "json-terse" (default: "json-terse")`),
@@ -429,10 +417,10 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			startTime := time.Now()
 
 			span.SetAttributes(
-				attribute.String("org", params.Org),
-				attribute.String("pipeline", params.Pipeline),
-				attribute.String("build", params.Build),
-				attribute.String("job", params.Job),
+				attribute.String("org_slug", params.OrgSlug),
+				attribute.String("pipeline_slug", params.PipelineSlug),
+				attribute.String("build_number", params.BuildNumber),
+				attribute.String("job_id", params.JobID),
 			)
 
 			// Create parquet reader
@@ -448,7 +436,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			}
 
 			// Get cache file path
-			cacheFile, err := buildkitelogs.GetCacheFilePath(params.Org, params.Pipeline, params.Build, params.Job)
+			cacheFile, err := buildkitelogs.GetCacheFilePath(params.OrgSlug, params.PipelineSlug, params.BuildNumber, params.JobID)
 			if err != nil {
 				return mcp.NewToolResultError(fmt.Sprintf("Failed to get cache file path: %v", err)), nil
 			}
@@ -478,21 +466,17 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
 	return mcp.NewTool("read_logs",
 			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits). The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("Buildkite organization slug"),
 			),
-			mcp.WithString("pipeline",
+			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("Pipeline slug"),
 			),
-			mcp.WithString("build",
+			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("Build number or UUID"),
 			),
-			mcp.WithString("job",
+			mcp.WithString("job_id",
 				mcp.Required(),
-				mcp.Description("Job ID"),
 			),
 			mcp.WithNumber("seek",
 				mcp.Description("Row number to start from (0-based, default: 0)"),
@@ -521,10 +505,10 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			startTime := time.Now()
 
 			span.SetAttributes(
-				attribute.String("org", params.Org),
-				attribute.String("pipeline", params.Pipeline),
-				attribute.String("build", params.Build),
-				attribute.String("job", params.Job),
+				attribute.String("org_slug", params.OrgSlug),
+				attribute.String("pipeline_slug", params.PipelineSlug),
+				attribute.String("build_number", params.BuildNumber),
+				attribute.String("job_id", params.JobID),
 				attribute.Int("seek", params.Seek),
 				attribute.Int("limit", params.Limit),
 			)

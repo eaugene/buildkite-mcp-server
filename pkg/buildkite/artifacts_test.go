@@ -59,7 +59,7 @@ func TestListArtifacts(t *testing.T) {
 	assert.NotNil(handler)
 
 	request := createMCPRequest(t, map[string]any{
-		"org":           "test-org",
+		"org_slug":      "test-org",
 		"pipeline_slug": "test-pipeline",
 		"build_number":  "123",
 	})
@@ -131,11 +131,11 @@ func TestListArtifacts_MissingParameters(t *testing.T) {
 	result, err := handler(ctx, req)
 	assert.NoError(err)
 	assert.NotNil(result)
-	assert.Contains(getTextResult(t, result).Text, "required argument \"org\" not found")
+	assert.Contains(getTextResult(t, result).Text, "required argument \"org_slug\" not found")
 
 	// Test missing pipeline_slug parameter
 	req = createMCPRequest(t, map[string]any{
-		"org":          "test-org",
+		"org_slug":     "test-org",
 		"build_number": "123",
 	})
 	result, err = handler(ctx, req)
@@ -145,7 +145,7 @@ func TestListArtifacts_MissingParameters(t *testing.T) {
 
 	// Test missing build_number parameter
 	req = createMCPRequest(t, map[string]any{
-		"org":           "test-org",
+		"org_slug":      "test-org",
 		"pipeline_slug": "test-pipeline",
 	})
 	result, err = handler(ctx, req)
