@@ -379,21 +379,6 @@ Or you can manually configure:
 | Variable | Description | Default | Usage |
 |----------|-------------|---------|-------|
 | `BUILDKITE_API_TOKEN` | Your Buildkite API access token | Required | Authentication for all API requests |
-| `JOB_LOG_TOKEN_THRESHOLD` | Token threshold for job logs | `0` (disabled) | **Local installations only** - Downloads logs to temp directory when exceeded |
-
-### Job Log Token Threshold
-
-The `JOB_LOG_TOKEN_THRESHOLD` environment variable controls when large job logs are downloaded to your local temporary directory instead of being returned directly.
-
-**⚠️ Important**: This setting should only be used with local installations as it:
-- Downloads job logs to your system's temporary directory
-- Reads log files from disk instead of returning them in the response
-- May consume local disk space for large log files
-
-When the threshold is exceeded, the `get_job_logs` tool will:
-1. Download the log content to a temporary file
-2. Return the file path and metadata instead of raw log content
-3. Include the reason for file-based delivery in the response
 
 ---
 
@@ -433,6 +418,40 @@ When the threshold is exceeded, the `get_job_logs` tool will:
 
 ---
 
+## 🔍 Job Log Analysis Tools
+
+Inspect Buildkite job logs in milliseconds, with full-text search, tail, and structured reads – all from one endpoint.
+
+The server ships with four log analysis tools that convert Buildkite job output to structured Parquet data for efficient querying:
+
+- **`search_logs`** – Regex search with context lines for debugging failures
+- **`tail_logs`** – Show last N lines for recent errors and status checks  
+- **`read_logs`** – Stream log entries from specific positions
+- **`get_logs_info`** – File metadata and statistics before reading content
+
+### Smart Caching & Storage
+
+The first request downloads and converts logs to Parquet format; subsequent requests are zero-API calls with near-instant response times. All tools return token-efficient JSON by default for optimal AI/LLM performance.
+
+| Environment | Default Cache Location |
+|-------------|----------------------|
+| Desktop/Laptop | `file://$HOME/.bklog` |
+| Docker/K8s/CI | `file:///tmp/bklog` |
+| Custom override | `$BKLOG_CACHE_URL` (any [gocloud URL](https://gocloud.dev/concepts/urls/)) |
+
+> **💡 Zero-config setup**: Don't set anything for local testing—the server auto-picks the right directory. Set `BKLOG_CACHE_URL` to override with S3 (`s3://bucket/path`), GCS, Azure, or custom storage backends.
+
+**Examples:**
+```bash
+# Local development with persistent cache
+export BKLOG_CACHE_URL="file:///Users/me/bklog-cache"
+
+# Shared cache across build agents  
+export BKLOG_CACHE_URL="s3://ci-logs-cache/buildkite/"
+```
+
+---
+
 ## 🌐 Streamable HTTP / SSE transport
 
 You can also run the MCP server using the Streamable HTTP Transport, and connect to the MCP server at <http://localhost:3000/mcp>.
@@ -453,7 +472,19 @@ buildkite-mcp-server http --listen "localhost:3000" --use-sse --api-token=${BUIL
 
 ---
 
-## Library Usage
+## 🤖 AGENTS.md
+
+We recommend adding a hint to your `AGENTS.md`, or equivalent agent configuration file, for example `CLAUDE.md` ect. This will typically be under an architecture section.
+
+This hint will orientate the agent towards using the buildkite MCP to quickly diagnose build issues, or return project level CI/CD insights quickly. You should replace the organization, pipeline slug(s) and pipeline files based on your project.
+
+```
+- **CI/CD**: `buildkite` organization, `buildkite-mcp-server` pipeline slug for build and test (`.buildkite/pipeline.yml`), `buildkite-mcp-server-release` pipeline slug for releases (`.buildkite/pipeline.release.yml`)
+```
+
+---
+
+## 📚 Library Usage
 
 The exported Go API of this module should be considered unstable, and subject to breaking changes as we evolve this project.
 
