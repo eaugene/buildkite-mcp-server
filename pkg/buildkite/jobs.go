@@ -21,7 +21,7 @@ import (
 
 // GetJobsArgs struct for typed parameters
 type GetJobsArgs struct {
-	OrgSlug      string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	BuildNumber  string `json:"build_number"`
 	JobState     string `json:"job_state"`
@@ -32,7 +32,7 @@ type GetJobsArgs struct {
 
 // GetJobLogsArgs struct for typed parameters
 type GetJobLogsArgs struct {
-	OrgSlug      string `json:"org"`
+	OrgSlug      string `json:"org_slug"`
 	PipelineSlug string `json:"pipeline_slug"`
 	BuildNumber  string `json:"build_number"`
 	JobUUID      string `json:"job_uuid"`
@@ -41,17 +41,14 @@ type GetJobLogsArgs struct {
 func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobsArgs]) {
 	return mcp.NewTool("get_jobs",
 			mcp.WithDescription("Get all jobs for a specific build including their state, timing, commands, and execution details"),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("job_state",
 				mcp.Description("Filter jobs by state. Supports actual states (scheduled, running, passed, failed, canceled, skipped, etc.)"),
@@ -79,7 +76,7 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFu
 
 			// Validate required parameters
 			if args.OrgSlug == "" {
-				return mcp.NewToolResultError("org parameter is required"), nil
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
@@ -165,21 +162,17 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFu
 func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobLogsArgs]) {
 	return mcp.NewTool("get_job_logs",
 			mcp.WithDescription("Get the log output and metadata for a specific job, including content, size, and header timestamps. Automatically saves to file for large logs to avoid token limits."),
-			mcp.WithString("org",
+			mcp.WithString("org_slug",
 				mcp.Required(),
-				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
-				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
-				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("job_uuid",
 				mcp.Required(),
-				mcp.Description("The UUID of the job"),
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Get Job Logs",
@@ -192,7 +185,7 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler mcp.TypedToolH
 
 			// Validate required parameters
 			if args.OrgSlug == "" {
-				return mcp.NewToolResultError("org parameter is required"), nil
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
 			}
 			if args.PipelineSlug == "" {
 				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
