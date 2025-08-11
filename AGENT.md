@@ -14,6 +14,7 @@
 - **Core packages**: `internal/buildkite/` - API wrappers, `internal/commands/` - CLI commands
 - **Key dependencies**: `github.com/mark3labs/mcp-go` (MCP protocol), `github.com/buildkite/go-buildkite/v4` (API client)
 - **Configuration**: Environment variables (BUILDKITE_API_TOKEN, OTEL tracing)
+- **CI/CD**: `buildkite` organization, `buildkite-mcp-server` pipeline slug for build and test (`.buildkite/pipeline.yml`), `buildkite-mcp-server-release` pipeline slug for releases (`.buildkite/pipeline.release.yml`)
 
 ## Code Style
 - Use `zerolog` for logging, `testify/require` for tests
