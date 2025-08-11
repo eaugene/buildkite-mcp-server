@@ -92,7 +92,9 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	tools = addTool(buildkite.UserTokenOrganization(client.Organizations))
 
 	// Job tools
-	tools = addTool(buildkite.GetJobs(client.Builds))
+	tools = addTool(
+		fromTypeTool(buildkite.GetJobs(client.Builds)),
+	)
 
 	// Artifacts tools
 	tools = addTool(buildkite.ListArtifacts(clientAdapter))

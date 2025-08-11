@@ -15,38 +15,43 @@ import (
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// withJobsPagination adds client-side pagination options to a tool with a max of 50 per page
-func withJobsPagination() mcp.ToolOption {
-	return func(tool *mcp.Tool) {
-		mcp.WithNumber("page",
-			mcp.Description("Page number for pagination (min 1)"),
-			mcp.Min(1),
-		)(tool)
-
-		mcp.WithNumber("perPage",
-			mcp.Description("Results per page for pagination (min 1, max 50)"),
-			mcp.Min(1),
-			mcp.Max(50),
-		)(tool)
-	}
+// GetJobsArgs struct for typed parameters
+type GetJobsArgs struct {
+	OrgSlug      string `json:"org"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+	JobState     string `json:"job_state"`
+	IncludeAgent bool   `json:"include_agent"`
+	Page         int    `json:"page"`
+	PerPage      int    `json:"perPage"`
 }
 
-func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+// GetJobLogsArgs struct for typed parameters
+type GetJobLogsArgs struct {
+	OrgSlug      string `json:"org"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+	JobUUID      string `json:"job_uuid"`
+}
+
+func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobsArgs]) {
 	return mcp.NewTool("get_jobs",
 			mcp.WithDescription("Get all jobs for a specific build including their state, timing, commands, and execution details"),
-			mcp.WithString("org_slug",
+			mcp.WithString("org",
 				mcp.Required(),
+				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
+				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
+				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("job_state",
 				mcp.Description("Filter jobs by state. Supports actual states (scheduled, running, passed, failed, canceled, skipped, etc.)"),
@@ -54,48 +59,61 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			mcp.WithBoolean("include_agent",
 				mcp.Description("Include detailed agent information in the response. When false (default), only agent ID is included to reduce response size."),
 			),
-			withJobsPagination(),
+			mcp.WithNumber("page",
+				mcp.Description("Page number for pagination (min 1)"),
+				mcp.Min(1),
+			),
+			mcp.WithNumber("perPage",
+				mcp.Description("Results per page for pagination (min 1, max 50)"),
+				mcp.Min(1),
+				mcp.Max(50),
+			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
 				Title:        "Get Jobs",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
-		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		func(ctx context.Context, request mcp.CallToolRequest, args GetJobsArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetJobs")
 			defer span.End()
 
-			orgSlug, err := request.RequireString("org_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Validate required parameters
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org parameter is required"), nil
+			}
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
+			}
+			if args.BuildNumber == "" {
+				return mcp.NewToolResultError("build_number parameter is required"), nil
 			}
 
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Set defaults for pagination
+			page := args.Page
+			if page == 0 {
+				page = 1
+			}
+			perPage := args.PerPage
+			if perPage == 0 {
+				perPage = 30
 			}
 
-			buildNumber, err := request.RequireString("build_number")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			paginationParams := ClientSidePaginationParams{
+				Page:    page,
+				PerPage: perPage,
 			}
-
-			jobStateFilter := request.GetString("job_state", "")
-			includeAgent := request.GetBool("include_agent", false)
-
-			// Get client-side pagination parameters (always enabled)
-			paginationParams := getClientSidePaginationParams(request)
 
 			span.SetAttributes(
-				attribute.String("org_slug", orgSlug),
-				attribute.String("pipeline_slug", pipelineSlug),
-				attribute.String("build_number", buildNumber),
-				attribute.String("job_state", jobStateFilter),
-				attribute.Bool("include_agent", includeAgent),
+				attribute.String("org_slug", args.OrgSlug),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("build_number", args.BuildNumber),
+				attribute.String("job_state", args.JobState),
+				attribute.Bool("include_agent", args.IncludeAgent),
 				attribute.Int("page", paginationParams.Page),
 				attribute.Int("per_page", paginationParams.PerPage),
 			)
 
-			build, resp, err := client.Get(ctx, orgSlug, pipelineSlug, buildNumber, &buildkite.BuildGetOptions{})
+			build, resp, err := client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, &buildkite.BuildGetOptions{})
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -111,10 +129,10 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			jobs := build.Jobs
 
 			// Filter jobs by state if specified
-			if jobStateFilter != "" {
+			if args.JobState != "" {
 				filteredJobs := make([]buildkite.Job, 0)
 				for _, job := range build.Jobs {
-					if job.State == jobStateFilter {
+					if job.State == args.JobState {
 						filteredJobs = append(filteredJobs, job)
 					}
 				}
@@ -122,7 +140,7 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 			}
 
 			// Remove agent details if not requested to reduce response size, but keep agent ID
-			if !includeAgent {
+			if !args.IncludeAgent {
 				jobsWithoutAgent := make([]buildkite.Job, len(jobs))
 				for i, job := range jobs {
 					jobCopy := job
@@ -144,17 +162,20 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler server.ToolHandlerFunc
 		}
 }
 
-func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobLogsArgs]) {
 	return mcp.NewTool("get_job_logs",
 			mcp.WithDescription("Get the log output and metadata for a specific job, including content, size, and header timestamps. Automatically saves to file for large logs to avoid token limits."),
-			mcp.WithString("org_slug",
+			mcp.WithString("org",
 				mcp.Required(),
+				mcp.Description("The organization slug for the owner of the pipeline"),
 			),
 			mcp.WithString("pipeline_slug",
 				mcp.Required(),
+				mcp.Description("The slug of the pipeline"),
 			),
 			mcp.WithString("build_number",
 				mcp.Required(),
+				mcp.Description("The number of the build"),
 			),
 			mcp.WithString("job_uuid",
 				mcp.Required(),
@@ -165,39 +186,33 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
-		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		func(ctx context.Context, request mcp.CallToolRequest, args GetJobLogsArgs) (*mcp.CallToolResult, error) {
 			ctx, span := trace.Start(ctx, "buildkite.GetJobLogs")
 			defer span.End()
 
-			orgSlug, err := request.RequireString("org_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			// Validate required parameters
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org parameter is required"), nil
 			}
-
-			pipelineSlug, err := request.RequireString("pipeline_slug")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
 			}
-
-			buildNumber, err := request.RequireString("build_number")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.BuildNumber == "" {
+				return mcp.NewToolResultError("build_number parameter is required"), nil
 			}
-
-			jobUUID, err := request.RequireString("job_uuid")
-			if err != nil {
-				return mcp.NewToolResultError(err.Error()), nil
+			if args.JobUUID == "" {
+				return mcp.NewToolResultError("job_uuid parameter is required"), nil
 			}
 
 			span.SetAttributes(
-				attribute.String("org_slug", orgSlug),
-				attribute.String("pipeline_slug", pipelineSlug),
-				attribute.String("build_number", buildNumber),
-				attribute.String("job_uuid", jobUUID),
+				attribute.String("org_slug", args.OrgSlug),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("build_number", args.BuildNumber),
+				attribute.String("job_uuid", args.JobUUID),
 			)
 
 			// Get job logs from API
-			joblog, resp, err := client.Jobs.GetJobLog(ctx, orgSlug, pipelineSlug, buildNumber, jobUUID)
+			joblog, resp, err := client.Jobs.GetJobLog(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, args.JobUUID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -238,8 +253,8 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 
 					return handleLargeLogFile(ctx, processedLog, JobLogsResponse{
 						TokenCount:  tokenCount,
-						JobUUID:     jobUUID,
-						BuildNumber: buildNumber,
+						JobUUID:     args.JobUUID,
+						BuildNumber: args.BuildNumber,
 						Reason:      fmt.Sprintf("Log exceeded %d token threshold", threshold),
 					}, threshold)
 				}
@@ -252,8 +267,8 @@ func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler server.ToolHan
 				DeliveryMode: "inline",
 				Content:      processedLog,
 				TokenCount:   tokenCount,
-				JobUUID:      jobUUID,
-				BuildNumber:  buildNumber,
+				JobUUID:      args.JobUUID,
+				BuildNumber:  args.BuildNumber,
 			}
 
 			r, err := json.Marshal(&response)

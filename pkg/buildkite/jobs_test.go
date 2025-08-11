@@ -39,12 +39,13 @@ func TestGetJobs(t *testing.T) {
 	require.NotNil(t, handler)
 
 	// Test getting all jobs (no filter) - agent info should be excluded by default
-	requestAll := createMCPRequest(t, map[string]any{
-		"org_slug":      "org",
-		"pipeline_slug": "pipeline",
-		"build_number":  "1",
-	})
-	resultAll, err := handler(ctx, requestAll)
+	requestAll := createMCPRequest(t, map[string]any{})
+	argsAll := GetJobsArgs{
+		OrgSlug:      "org",
+		PipelineSlug: "pipeline",
+		BuildNumber:  "1",
+	}
+	resultAll, err := handler(ctx, requestAll, argsAll)
 	require.NoError(t, err)
 
 	textContentAll := getTextResult(t, resultAll)
@@ -60,9 +61,9 @@ func TestGetJobs(t *testing.T) {
 	assert.NotContains(t, textContentAll.Text, `"test-agent-2"`)
 	assert.Contains(t, textContentAll.Text, `"agent3"`)
 	assert.NotContains(t, textContentAll.Text, `"test-agent-3"`)
-	// Should always have pagination metadata (default page size 25)
+	// Should always have pagination metadata (default page size 30)
 	assert.Contains(t, textContentAll.Text, `"page":1`)
-	assert.Contains(t, textContentAll.Text, `"per_page":25`)
+	assert.Contains(t, textContentAll.Text, `"per_page":30`)
 	assert.Contains(t, textContentAll.Text, `"total":4`)
 	assert.Contains(t, textContentAll.Text, `"has_next":false`)
 	assert.Contains(t, textContentAll.Text, `"has_prev":false`)
@@ -99,13 +100,14 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 	require.NotNil(t, handler)
 
 	t.Run("filter by passed state", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"job_state":     "passed",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			JobState:     "passed",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -116,22 +118,23 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 		assert.NotContains(t, textContent.Text, `"job3"`)
 		assert.NotContains(t, textContent.Text, `"job4"`)
 		assert.NotContains(t, textContent.Text, `"job6"`)
-		// Should always have pagination metadata (default page size 25)
+		// Should always have pagination metadata (default page size 30)
 		assert.Contains(t, textContent.Text, `"page":1`)
-		assert.Contains(t, textContent.Text, `"per_page":25`)
+		assert.Contains(t, textContent.Text, `"per_page":30`)
 		assert.Contains(t, textContent.Text, `"total":2`)
 		assert.Contains(t, textContent.Text, `"has_next":false`)
 		assert.Contains(t, textContent.Text, `"has_prev":false`)
 	})
 
 	t.Run("filter by failed state", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"job_state":     "failed",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			JobState:     "failed",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -142,22 +145,23 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 		assert.NotContains(t, textContent.Text, `"job4"`)
 		assert.NotContains(t, textContent.Text, `"job5"`)
 		assert.NotContains(t, textContent.Text, `"job6"`)
-		// Should always have pagination metadata (default page size 25)
+		// Should always have pagination metadata (default page size 30)
 		assert.Contains(t, textContent.Text, `"page":1`)
-		assert.Contains(t, textContent.Text, `"per_page":25`)
+		assert.Contains(t, textContent.Text, `"per_page":30`)
 		assert.Contains(t, textContent.Text, `"total":1`)
 		assert.Contains(t, textContent.Text, `"has_next":false`)
 		assert.Contains(t, textContent.Text, `"has_prev":false`)
 	})
 
 	t.Run("filter by running state", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"job_state":     "running",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			JobState:     "running",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -168,9 +172,9 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 		assert.NotContains(t, textContent.Text, `"job4"`)
 		assert.NotContains(t, textContent.Text, `"job5"`)
 		assert.NotContains(t, textContent.Text, `"job6"`)
-		// Should always have pagination metadata (default page size 25)
+		// Should always have pagination metadata (default page size 30)
 		assert.Contains(t, textContent.Text, `"page":1`)
-		assert.Contains(t, textContent.Text, `"per_page":25`)
+		assert.Contains(t, textContent.Text, `"per_page":30`)
 		assert.Contains(t, textContent.Text, `"total":1`)
 		assert.Contains(t, textContent.Text, `"has_next":false`)
 		assert.Contains(t, textContent.Text, `"has_prev":false`)
@@ -186,11 +190,12 @@ func TestGetJobsMissingParameters(t *testing.T) {
 	require.NotNil(t, handler)
 
 	t.Run("missing org", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result.Content, 1)
@@ -200,11 +205,12 @@ func TestGetJobsMissingParameters(t *testing.T) {
 	})
 
 	t.Run("missing pipeline_slug", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":     "org",
-			"build_number": "1",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:     "org",
+			BuildNumber: "1",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result.Content, 1)
@@ -214,11 +220,12 @@ func TestGetJobsMissingParameters(t *testing.T) {
 	})
 
 	t.Run("missing build_number", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result.Content, 1)
@@ -259,14 +266,15 @@ func TestGetJobsPagination(t *testing.T) {
 	require.NotNil(t, handler)
 
 	t.Run("first page", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"page":          float64(1),
-			"perPage":       float64(2),
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			Page:         1,
+			PerPage:      2,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -284,14 +292,15 @@ func TestGetJobsPagination(t *testing.T) {
 	})
 
 	t.Run("second page", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"page":          float64(2),
-			"perPage":       float64(2),
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			Page:         2,
+			PerPage:      2,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -309,14 +318,15 @@ func TestGetJobsPagination(t *testing.T) {
 	})
 
 	t.Run("last page", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"page":          float64(3),
-			"perPage":       float64(2),
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			Page:         3,
+			PerPage:      2,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -332,14 +342,15 @@ func TestGetJobsPagination(t *testing.T) {
 	})
 
 	t.Run("page beyond available data", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"page":          float64(5),
-			"perPage":       float64(2),
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			Page:         5,
+			PerPage:      2,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -376,12 +387,13 @@ func TestGetJobsAgentInfo(t *testing.T) {
 	require.NotNil(t, handler)
 
 	t.Run("default behavior excludes detailed agent info", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -392,13 +404,14 @@ func TestGetJobsAgentInfo(t *testing.T) {
 	})
 
 	t.Run("include_agent=false excludes detailed agent info", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"include_agent": false,
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			IncludeAgent: false,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -413,13 +426,14 @@ func TestGetJobsAgentInfo(t *testing.T) {
 	})
 
 	t.Run("include_agent=true includes detailed agent info", func(t *testing.T) {
-		request := createMCPRequest(t, map[string]any{
-			"org_slug":      "org",
-			"pipeline_slug": "pipeline",
-			"build_number":  "1",
-			"include_agent": true,
-		})
-		result, err := handler(ctx, request)
+		request := createMCPRequest(t, map[string]any{})
+		args := GetJobsArgs{
+			OrgSlug:      "org",
+			PipelineSlug: "pipeline",
+			BuildNumber:  "1",
+			IncludeAgent: true,
+		}
+		result, err := handler(ctx, request, args)
 		require.NoError(t, err)
 
 		textContent := getTextResult(t, result)
@@ -465,15 +479,16 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 	require.NotNil(t, handler)
 
 	// Test pagination with state filter - should have 4 "passed" jobs total
-	requestPassedPaginated := createMCPRequest(t, map[string]any{
-		"org_slug":      "org",
-		"pipeline_slug": "pipeline",
-		"build_number":  "1",
-		"job_state":     "passed",
-		"page":          float64(1),
-		"perPage":       float64(2),
-	})
-	resultPassedPaginated, err := handler(ctx, requestPassedPaginated)
+	requestPassedPaginated := createMCPRequest(t, map[string]any{})
+	argsPassedPaginated := GetJobsArgs{
+		OrgSlug:      "org",
+		PipelineSlug: "pipeline",
+		BuildNumber:  "1",
+		JobState:     "passed",
+		Page:         1,
+		PerPage:      2,
+	}
+	resultPassedPaginated, err := handler(ctx, requestPassedPaginated, argsPassedPaginated)
 	require.NoError(t, err)
 
 	textContentPassedPaginated := getTextResult(t, resultPassedPaginated)
@@ -504,45 +519,49 @@ func TestGetJobLogs(t *testing.T) {
 		_, handler := GetJobLogs(&buildkite.Client{})
 
 		// Test missing org parameter
-		req := createMCPRequest(t, map[string]any{
-			"pipeline_slug": "test-pipeline",
-			"build_number":  "123",
-			"job_uuid":      "job-123",
-		})
-		result, err := handler(context.Background(), req)
+		req := createMCPRequest(t, map[string]any{})
+		args := GetJobLogsArgs{
+			PipelineSlug: "test-pipeline",
+			BuildNumber:  "123",
+			JobUUID:      "job-123",
+		}
+		result, err := handler(context.Background(), req, args)
 		assert.NoError(err)
 		assert.NotNil(result)
 		assert.NotEmpty(result.Content)
 
 		// Test missing pipeline_slug parameter
-		req = createMCPRequest(t, map[string]any{
-			"org_slug":     "test-org",
-			"build_number": "123",
-			"job_uuid":     "job-123",
-		})
-		result, err = handler(context.Background(), req)
+		req = createMCPRequest(t, map[string]any{})
+		args = GetJobLogsArgs{
+			OrgSlug:     "test-org",
+			BuildNumber: "123",
+			JobUUID:     "job-123",
+		}
+		result, err = handler(context.Background(), req, args)
 		assert.NoError(err)
 		assert.NotNil(result)
 		assert.NotEmpty(result.Content)
 
 		// Test missing build_number parameter
-		req = createMCPRequest(t, map[string]any{
-			"org_slug":      "test-org",
-			"pipeline_slug": "test-pipeline",
-			"job_uuid":      "job-123",
-		})
-		result, err = handler(context.Background(), req)
+		req = createMCPRequest(t, map[string]any{})
+		args = GetJobLogsArgs{
+			OrgSlug:      "test-org",
+			PipelineSlug: "test-pipeline",
+			JobUUID:      "job-123",
+		}
+		result, err = handler(context.Background(), req, args)
 		assert.NoError(err)
 		assert.NotNil(result)
 		assert.NotEmpty(result.Content)
 
 		// Test missing job_uuid parameter
-		req = createMCPRequest(t, map[string]any{
-			"org_slug":      "test-org",
-			"pipeline_slug": "test-pipeline",
-			"build_number":  "123",
-		})
-		result, err = handler(context.Background(), req)
+		req = createMCPRequest(t, map[string]any{})
+		args = GetJobLogsArgs{
+			OrgSlug:      "test-org",
+			PipelineSlug: "test-pipeline",
+			BuildNumber:  "123",
+		}
+		result, err = handler(context.Background(), req, args)
 		assert.NoError(err)
 		assert.NotNil(result)
 		assert.NotEmpty(result.Content)
