@@ -12,7 +12,7 @@
 
 ```bash
 # Run via Docker with the token from above
-docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite/mcp-server stdio
 ```
 
 
@@ -77,13 +77,13 @@ docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkit
 ### 1. Docker (recommended)
 
 ```bash
-docker pull ghcr.io/buildkite/buildkite-mcp-server
+docker pull buildkite/mcp-server
 ```
 
 Run:
 
 ```bash
-docker run -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite/mcp-server stdio
 ```
 
 ### 2. Pre-built binary
@@ -134,8 +134,9 @@ Docker (recommended):
     "buildkite": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
-        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+        "run", "--pull=always", "-q",
+        "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "buildkite/mcp-server", "stdio"
       ],
       "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
@@ -165,7 +166,7 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
 Docker (recommended):
 
 ```
-claude mcp add buildkite -- docker run --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx ghcr.io/buildkite/buildkite-mcp-server stdio
+claude mcp add buildkite -- docker run --pull=always -q --rm -i -e BUILDKITE_API_TOKEN=bkua_xxxxxxxx buildkite/mcp-server stdio
 ```
 
 Local binary:
@@ -186,8 +187,9 @@ Docker (recommended):
     "buildkite": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
-        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+        "run", "--pull=always", "-q",
+        "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "buildkite/mcp-server", "stdio"
       ],
       "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
@@ -222,9 +224,10 @@ Docker (recommended):
   "buildkite": {
     "command": "docker",
     "args": [
-      "run", "-i", "--rm",
+      "run", "--pull=always", "-q",
+      "-i", "--rm",
       "-e", "BUILDKITE_API_TOKEN",
-      "ghcr.io/buildkite/buildkite-mcp-server",
+      "buildkite/mcp-server",
       "stdio"
     ]
   }
@@ -270,7 +273,7 @@ extensions:
   fetch:
     name: Buildkite
     cmd: docker
-    args: ["run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN", "ghcr.io/buildkite/buildkite-mcp-server", "stdio"]
+    args: ["run", "--pull=always", "-q", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN", "buildkite/mcp-server", "stdio"]
     enabled: true
     envs: { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     type: stdio
@@ -308,8 +311,9 @@ extensions:
     "buildkite": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
-        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+        "run", "--pull=always", "-q", 
+        "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "buildkite/mcp-server", "stdio"
       ],
       "env": { "BUILDKITE_API_TOKEN": "${input:BUILDKITE_API_TOKEN}" }
     }
@@ -326,8 +330,9 @@ extensions:
     "buildkite": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
-        "ghcr.io/buildkite/buildkite-mcp-server", "stdio"
+        "run", "--pull=always", "-q", 
+        "-i", "--rm", "-e", "BUILDKITE_API_TOKEN",
+        "buildkite/mcp-server", "stdio"
       ],
       "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
