@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-const defaultHTTPPort = 3000
 
 type HTTPCmd struct {
 	Listen string `help:"The address to listen on." default:"localhost:3000" env:"HTTP_LISTEN_ADDR"`
@@ -28,9 +28,7 @@ func (c *HTTPCmd) Run(ctx context.Context, globals *Globals) error {
 	logEvent := log.Ctx(ctx).Info().Str("address", c.Listen)
 
 	mux := http.NewServeMux()
-	srv := http.Server{
-		Handler: mux,
-	}
+	srv := newServerWithTimeouts(mux)
 
 	if c.UseSSE {
 		handler := mcpserver.NewSSEServer(mcpServer)
@@ -43,4 +41,14 @@ func (c *HTTPCmd) Run(ctx context.Context, globals *Globals) error {
 	}
 
 	return srv.Serve(listener)
+}
+
+func newServerWithTimeouts(mux *http.ServeMux) *http.Server {
+	return &http.Server{
+		Handler:           otelhttp.NewHandler(mux, "mcp-server"),
+		ReadHeaderTimeout: 30 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 }
