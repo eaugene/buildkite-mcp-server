@@ -357,6 +357,25 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
 </details>
 
 <details>
+<summary><a href="https://toolhive.dev">Toolhive</a></summary>
+
+The Buildkite MCP server is packaged and available in the Toolhive registry.
+
+Before running the server, store your API token as a secret:
+
+```bash
+cat ~/path/to/your/buildkite-api-token.txt | thv secret set buildkite-api-key
+```
+
+Run the server:
+
+```bash
+thv run --secret buildkite-api-key,target=BUILDKITE_API_TOKEN buildkite
+```
+
+</details>
+
+<details>
 <summary>Zed</summary>
 
 There is a Zed [editor extension](https://zed.dev) available in the [official extension gallery](https://zed.dev/extensions?query=buildkite). During installation it will ask for an API token which will be added to your settings.
