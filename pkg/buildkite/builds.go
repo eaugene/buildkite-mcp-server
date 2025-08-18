@@ -709,7 +709,7 @@ func getTimestampStringOrNil(ts *buildkite.Timestamp) *string {
 
 func isTerminalState(state string) bool {
 	switch state {
-	case "finished", "failed", "canceled":
+	case "finished", "failed", "canceled", "passed":
 		return true
 	default:
 		return false
