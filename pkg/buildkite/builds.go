@@ -642,7 +642,7 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 
 					break WAITLOOP
 				case <-ticker.C:
-					build, _, err = client.Get(ctx, args.OrgSlug, args.PipelineSlug, build.ID, nil)
+					build, _, err = client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, nil)
 					if err != nil {
 						return nil, fmt.Errorf("failed to get build status: %w", err)
 					}
@@ -669,7 +669,7 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 
 					}
 
-					if build.State == "finished" {
+					if isTerminalState(build.State) {
 						break WAITLOOP
 					}
 				}
@@ -703,6 +703,15 @@ func getTimestampStringOrNil(ts *buildkite.Timestamp) *string {
 	if ts == nil {
 		return nil
 	}
-	str := ts.Time.String()
+	str := ts.Format(time.RFC3339)
 	return &str
+}
+
+func isTerminalState(state string) bool {
+	switch state {
+	case "finished", "failed", "canceled":
+		return true
+	default:
+		return false
+	}
 }
