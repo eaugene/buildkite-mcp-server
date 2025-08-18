@@ -7,6 +7,7 @@ require (
 	github.com/buildkite/buildkite-logs v0.5.2
 	github.com/buildkite/go-buildkite/v4 v4.5.1
 	github.com/buildkite/terminal-to-html/v3 v3.16.8
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/huantt/plaintext-extractor v1.1.0
 	github.com/mark3labs/mcp-go v0.36.0
 	github.com/rs/zerolog v1.34.0
@@ -27,7 +28,6 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
