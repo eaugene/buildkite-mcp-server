@@ -582,7 +582,7 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 				mcp.DefaultNumber(300), // 5 minutes
 			),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
-				Title:        "Get Build",
+				Title:        "Wait for Build",
 				ReadOnlyHint: mcp.ToBoolPtr(true),
 			}),
 		),
