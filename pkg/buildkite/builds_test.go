@@ -39,6 +39,162 @@ func (m *MockBuildsClient) Create(ctx context.Context, org string, pipeline stri
 
 var _ BuildsClient = (*MockBuildsClient)(nil)
 
+func TestWaitForBuildCompletes(t *testing.T) {
+	assert := require.New(t)
+
+	ctx := context.Background()
+
+	// Track call count to simulate state changes
+	callCount := 0
+	client := &MockBuildsClient{
+		GetFunc: func(ctx context.Context, org string, pipeline string, id string, opt *buildkite.BuildGetOptions) (buildkite.Build, *buildkite.Response, error) {
+			callCount++
+
+			// First call returns running build, second call returns finished build
+			state := "running"
+			if callCount >= 2 {
+				state = "finished"
+			}
+
+			return buildkite.Build{
+					ID:        "123",
+					Number:    1,
+					State:     state,
+					CreatedAt: &buildkite.Timestamp{},
+				}, &buildkite.Response{
+					Response: &http.Response{
+						StatusCode: 200,
+					},
+				}, nil
+		},
+	}
+
+	tool, typedHandler := WaitForBuild(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
+	assert.NotNil(tool)
+	assert.NotNil(handler)
+
+	// Test with short timeout to make test fast
+	request := mcp.CallToolRequest{
+		Params: struct {
+			Name      string    `json:"name"`
+			Arguments any       `json:"arguments,omitempty"`
+			Meta      *mcp.Meta `json:"_meta,omitempty"`
+		}{
+			Arguments: map[string]any{
+				"org_slug":      "org",
+				"pipeline_slug": "pipeline",
+				"build_number":  "1",
+				"wait_timeout":  10,
+			},
+			Meta: &mcp.Meta{}, // Add empty Meta to avoid nil pointer
+		},
+	}
+	result, err := handler(ctx, request)
+	assert.NoError(err)
+
+	textContent := getTextResult(t, result)
+	assert.Contains(textContent.Text, `"id":"123"`)
+	assert.Contains(textContent.Text, `"number":1`)
+	assert.Contains(textContent.Text, `"state":"finished"`)
+
+	// Should have been called at least twice (initial + polling)
+	assert.GreaterOrEqual(callCount, 2)
+}
+
+func TestWaitForBuildTimeout(t *testing.T) {
+	assert := require.New(t)
+
+	ctx := context.Background()
+
+	client := &MockBuildsClient{
+		GetFunc: func(ctx context.Context, org string, pipeline string, id string, opt *buildkite.BuildGetOptions) (buildkite.Build, *buildkite.Response, error) {
+			// Always return running to trigger timeout
+			return buildkite.Build{
+					ID:        "123",
+					Number:    1,
+					State:     "running",
+					CreatedAt: &buildkite.Timestamp{},
+				}, &buildkite.Response{
+					Response: &http.Response{
+						StatusCode: 200,
+					},
+				}, nil
+		},
+	}
+
+	tool, typedHandler := WaitForBuild(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
+	assert.NotNil(tool)
+	assert.NotNil(handler)
+
+	// Test with very short timeout (1 second)
+	request := mcp.CallToolRequest{
+		Params: struct {
+			Name      string    `json:"name"`
+			Arguments any       `json:"arguments,omitempty"`
+			Meta      *mcp.Meta `json:"_meta,omitempty"`
+		}{
+			Arguments: map[string]any{
+				"org_slug":      "org",
+				"pipeline_slug": "pipeline",
+				"build_number":  "1",
+				"wait_timeout":  1,
+			},
+			Meta: &mcp.Meta{}, // Add empty Meta to avoid nil pointer
+		},
+	}
+	result, err := handler(ctx, request)
+	assert.NoError(err)
+
+	textContent := getTextResult(t, result)
+	// Should still return the build even if timeout occurs
+	assert.Contains(textContent.Text, `"id":"123"`)
+	assert.Contains(textContent.Text, `"state":"running"`)
+}
+
+func TestWaitForBuildMissingParameters(t *testing.T) {
+	assert := require.New(t)
+
+	ctx := context.Background()
+	client := &MockBuildsClient{}
+
+	tool, typedHandler := WaitForBuild(client)
+	handler := mcp.NewTypedToolHandler(typedHandler)
+	assert.NotNil(tool)
+	assert.NotNil(handler)
+
+	// Test missing org_slug
+	request := createMCPRequest(t, map[string]any{
+		"pipeline_slug": "pipeline",
+		"build_number":  "1",
+	})
+	result, err := handler(ctx, request)
+	assert.NoError(err)
+	assert.True(result.IsError)
+	assert.Contains(result.Content[0].(mcp.TextContent).Text, "org_slug parameter is required")
+
+	// Test missing pipeline_slug
+	request = createMCPRequest(t, map[string]any{
+		"org_slug":     "org",
+		"build_number": "1",
+	})
+	result, err = handler(ctx, request)
+	assert.NoError(err)
+	assert.True(result.IsError)
+	assert.Contains(result.Content[0].(mcp.TextContent).Text, "pipeline_slug parameter is required")
+
+	// Test missing build_number
+	request = createMCPRequest(t, map[string]any{
+		"org_slug":      "org",
+		"pipeline_slug": "pipeline",
+	})
+	result, err = handler(ctx, request)
+	assert.NoError(err)
+	assert.True(result.IsError)
+	assert.Contains(result.Content[0].(mcp.TextContent).Text, "build_number parameter is required")
+}
+
 func TestGetBuildDefault(t *testing.T) {
 	assert := require.New(t)
 
