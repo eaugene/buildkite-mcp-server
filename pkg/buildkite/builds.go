@@ -644,7 +644,14 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 				case <-ticker.C:
 					build, _, err = client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, nil)
 					if err != nil {
-						return nil, fmt.Errorf("failed to get build status: %w", err)
+						var errResp *buildkite.ErrorResponse
+						if errors.As(err, &errResp) {
+							if errResp.RawBody != nil {
+								return mcp.NewToolResultError(string(errResp.RawBody)), nil
+							}
+						}
+
+						return mcp.NewToolResultError(err.Error()), nil
 					}
 
 					log.Ctx(ctx).Info().Str("build_id", build.ID).Str("state", build.State).Int("job_count", len(build.Jobs)).Msg("Build status checked")
@@ -652,15 +659,24 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 					if progressToken != nil {
 						log.Ctx(ctx).Info().Any("progress_token", progressToken).Msg("Build progress token")
 
+						total, remaining := completedJobs(build.Jobs)
+
+						// TODO maybe some sort of adaptive backoff based on percentage complete
+						if remaining == 1 {
+							b.Reset()
+						}
+
 						err := server.SendNotificationToClient(
 							ctx,
 							"notifications/progress",
 							map[string]any{
-								"build_number": build.Number,
-								"status":       build.State,
-								"job_count":    len(build.Jobs),
-								"created_at":   getTimestampStringOrNil(build.CreatedAt),
-								"started_at":   getTimestampStringOrNil(build.StartedAt),
+								"build_number":        build.Number,
+								"status":              build.State,
+								"total_job_count":     total,
+								"remaining_job_count": remaining,
+								"percentage_complete": calculatePercentage(total, remaining),
+								"created_at":          getTimestampStringOrNil(build.CreatedAt),
+								"started_at":          getTimestampStringOrNil(build.StartedAt),
 							},
 						)
 						if err != nil {
@@ -707,11 +723,30 @@ func getTimestampStringOrNil(ts *buildkite.Timestamp) *string {
 	return &str
 }
 
+// see https://buildkite.com/docs/pipelines/configure/notifications#build-states
 func isTerminalState(state string) bool {
 	switch state {
-	case "finished", "failed", "canceled", "passed":
+	case "passed", "failed", "blocked", "canceled":
 		return true
 	default:
 		return false
 	}
+}
+
+func completedJobs(jobs []buildkite.Job) (total int, remaining int) {
+	total = len(jobs)
+	for _, job := range jobs {
+		if isTerminalState(job.State) {
+			remaining++
+		}
+	}
+	return total, remaining
+}
+
+// safely calculate the percentage complete
+func calculatePercentage(total, remaining int) int {
+	if total == 0 {
+		return 0
+	}
+	return (total - remaining) * 100 / total
 }
