@@ -726,7 +726,7 @@ func getTimestampStringOrNil(ts *buildkite.Timestamp) *string {
 // see https://buildkite.com/docs/pipelines/configure/notifications#build-states
 func isTerminalState(state string) bool {
 	switch state {
-	case "passed", "failed", "blocked", "canceled":
+	case "passed", "failed", "skipped", "canceled", "blocked":
 		return true
 	default:
 		return false
