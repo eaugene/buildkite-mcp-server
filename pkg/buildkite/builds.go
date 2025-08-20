@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -554,6 +558,151 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 		}
 }
 
+type WaitForBuildArgs struct {
+	OrgSlug      string `json:"org_slug"`
+	PipelineSlug string `json:"pipeline_slug"`
+	BuildNumber  string `json:"build_number"`
+	WaitTimeout  int    `json:"wait_timeout"`
+}
+
+func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[WaitForBuildArgs]) {
+	return mcp.NewTool("wait_for_build",
+			mcp.WithDescription("Wait for a specific build to complete"),
+			mcp.WithString("org_slug",
+				mcp.Required(),
+			),
+			mcp.WithString("pipeline_slug",
+				mcp.Required(),
+			),
+			mcp.WithString("build_number",
+				mcp.Required(),
+			),
+			mcp.WithNumber("wait_timeout",
+				mcp.Description("Timeout in seconds to wait for job completion"),
+				mcp.DefaultNumber(300), // 5 minutes
+			),
+			mcp.WithToolAnnotation(mcp.ToolAnnotation{
+				Title:        "Wait for Build",
+				ReadOnlyHint: mcp.ToBoolPtr(true),
+			}),
+		),
+		func(ctx context.Context, request mcp.CallToolRequest, args WaitForBuildArgs) (*mcp.CallToolResult, error) {
+			ctx, span := trace.Start(ctx, "buildkite.WaitForBuild")
+			defer span.End()
+
+			// Validate required parameters
+			if args.OrgSlug == "" {
+				return mcp.NewToolResultError("org_slug parameter is required"), nil
+			}
+			if args.PipelineSlug == "" {
+				return mcp.NewToolResultError("pipeline_slug parameter is required"), nil
+			}
+			if args.BuildNumber == "" {
+				return mcp.NewToolResultError("build_number parameter is required"), nil
+			}
+
+			span.SetAttributes(
+				attribute.String("org_slug", args.OrgSlug),
+				attribute.String("pipeline_slug", args.PipelineSlug),
+				attribute.String("build_number", args.BuildNumber),
+				attribute.Int("wait_timeout", args.WaitTimeout),
+			)
+
+			build, _, err := client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, &buildkite.BuildGetOptions{})
+			if err != nil {
+				var errResp *buildkite.ErrorResponse
+				if errors.As(err, &errResp) {
+					if errResp.RawBody != nil {
+						return mcp.NewToolResultError(string(errResp.RawBody)), nil
+					}
+				}
+
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+
+			// wait for the build to enter a terminal state
+			b := backoff.NewExponentialBackOff()
+			b.InitialInterval = 5 * time.Second
+			b.MaxInterval = 30 * time.Second
+
+			ticker := backoff.NewTicker(b)
+			defer ticker.Stop()
+
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(args.WaitTimeout)*time.Second)
+			defer cancel()
+
+			progressToken := request.Params.Meta.ProgressToken
+			server := server.ServerFromContext(ctx)
+
+		WAITLOOP:
+			for {
+				select {
+				case <-ctx.Done():
+					log.Ctx(ctx).Info().Msg("Context cancelled, stopping build wait loop")
+
+					break WAITLOOP
+				case <-ticker.C:
+					build, _, err = client.Get(ctx, args.OrgSlug, args.PipelineSlug, args.BuildNumber, nil)
+					if err != nil {
+						var errResp *buildkite.ErrorResponse
+						if errors.As(err, &errResp) {
+							if errResp.RawBody != nil {
+								return mcp.NewToolResultError(string(errResp.RawBody)), nil
+							}
+						}
+
+						return mcp.NewToolResultError(err.Error()), nil
+					}
+
+					log.Ctx(ctx).Info().Str("build_id", build.ID).Str("state", build.State).Int("job_count", len(build.Jobs)).Msg("Build status checked")
+
+					if progressToken != nil {
+						log.Ctx(ctx).Info().Any("progress_token", progressToken).Msg("Build progress token")
+
+						total, remaining := completedJobs(build.Jobs)
+
+						// TODO maybe some sort of adaptive backoff based on percentage complete
+						if remaining == 1 {
+							b.Reset()
+						}
+
+						err := server.SendNotificationToClient(
+							ctx,
+							"notifications/progress",
+							map[string]any{
+								"build_number":        build.Number,
+								"status":              build.State,
+								"total_job_count":     total,
+								"remaining_job_count": remaining,
+								"percentage_complete": calculatePercentage(total, remaining),
+								"created_at":          getTimestampStringOrNil(build.CreatedAt),
+								"started_at":          getTimestampStringOrNil(build.StartedAt),
+							},
+						)
+						if err != nil {
+							return nil, fmt.Errorf("failed to send notification: %w", err)
+						}
+
+					}
+
+					if isTerminalState(build.State) {
+						break WAITLOOP
+					}
+				}
+			}
+
+			// default to detailed
+			result := detailBuild(build)
+
+			r, err := json.Marshal(result)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal build: %w", err)
+			}
+
+			return mcp.NewToolResultText(string(r)), nil
+		}
+}
+
 func convertEntries(entries []Entry) map[string]string {
 	if entries == nil {
 		return nil
@@ -564,4 +713,40 @@ func convertEntries(entries []Entry) map[string]string {
 		result[entry.Key] = entry.Value
 	}
 	return result
+}
+
+func getTimestampStringOrNil(ts *buildkite.Timestamp) *string {
+	if ts == nil {
+		return nil
+	}
+	str := ts.Format(time.RFC3339)
+	return &str
+}
+
+// see https://buildkite.com/docs/pipelines/configure/notifications#build-states
+func isTerminalState(state string) bool {
+	switch state {
+	case "passed", "failed", "skipped", "canceled", "blocked":
+		return true
+	default:
+		return false
+	}
+}
+
+func completedJobs(jobs []buildkite.Job) (total int, remaining int) {
+	total = len(jobs)
+	for _, job := range jobs {
+		if isTerminalState(job.State) {
+			remaining++
+		}
+	}
+	return total, remaining
+}
+
+// safely calculate the percentage complete
+func calculatePercentage(total, remaining int) int {
+	if total == 0 {
+		return 0
+	}
+	return (total - remaining) * 100 / total
 }

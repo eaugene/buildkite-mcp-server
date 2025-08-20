@@ -86,6 +86,9 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	tools = addTool(
 		fromTypeTool(buildkite.CreateBuild(client.Builds)),
 	)
+	tools = addTool(
+		fromTypeTool(buildkite.WaitForBuild(client.Builds)),
+	)
 
 	// User tools
 	tools = addTool(buildkite.CurrentUser(client.User))

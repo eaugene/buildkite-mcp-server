@@ -425,6 +425,7 @@ Or you can manually configure:
 | `get_build` | Get detailed information about a specific build including its jobs, timing, and execution details |
 | `get_build_test_engine_runs` | Get test engine runs data for a specific build in Buildkite. This can be used to look up Test Runs. |
 | `create_build` | Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information |
+| `wait_for_build` | Wait for a specific build to complete |
 | `current_user` | Get details about the user account that owns the API token, including name, email, avatar, and account creation date |
 | `user_token_organization` | Get the organization associated with the user token used for this request |
 | `get_jobs` | Get all jobs for a specific build including their state, timing, commands, and execution details |
