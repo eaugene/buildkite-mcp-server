@@ -45,9 +45,20 @@ docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite
 
 ## 🔑 API Token Scopes
 
-### Full functionality
+### All READ and WRITE functionality
 
-👉 **Quick add:** [Create token with Full functionality](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_clusters&scopes[]=read_pipelines&scopes[]=read_builds&scopes[]=read_build_logs&scopes[]=read_user&scopes[]=read_organizations&scopes[]=read_artifacts&scopes[]=read_suites)
+👉 **Quick add:** [Create token with READ and WRITE functionality](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_clusters&scopes[]=read_pipelines&scopes[]=read_builds&scopes[]=read_build_logs&scopes[]=read_user&scopes[]=read_organizations&scopes[]=read_artifacts&scopes[]=read_suites&scopes[]=write_builds&scopes[]=write_pipelines)
+
+| Scope | Purpose |
+|-------|---------|
+| `write_pipelines` | Create and update pipelines |
+| `write_builds` | Create builds, unblock jobs, trigger builds |
+
+*Includes all READONLY and Minimum scopes listed below.*
+
+### All READONLY functionality
+
+👉 **Quick add:** [Create token with READONLY functionality](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_clusters&scopes[]=read_pipelines&scopes[]=read_builds&scopes[]=read_build_logs&scopes[]=read_user&scopes[]=read_organizations&scopes[]=read_artifacts&scopes[]=read_suites)
 
 | Scope | Purpose |
 |-------|---------|
@@ -60,6 +71,8 @@ docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite
 | `read_artifacts` | Build artifacts & metadata |
 | `read_suites` | Buildkite Test Engine data |
 
+*Includes Minimum scopes listed below.*
+
 ### Minimum recommended
 
 👉 **Quick add:** [Create token with Basic functionality](https://buildkite.com/user/api-access-tokens/new?scopes[]=read_builds&scopes[]=read_pipelines&scopes[]=read_user)
@@ -69,6 +82,8 @@ docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite
 | `read_builds` | Builds, jobs & annotations |
 | `read_pipelines` | Pipeline information |
 | `read_user` | User identification |
+
+> **Note:** Tools requiring write access, like `unblock_job`, `create_build` and `create_pipeline` require the "All READ and WRITE functionality" token.
 
 ---
 
@@ -429,6 +444,7 @@ Or you can manually configure:
 | `current_user` | Get details about the user account that owns the API token, including name, email, avatar, and account creation date |
 | `user_token_organization` | Get the organization associated with the user token used for this request |
 | `get_jobs` | Get all jobs for a specific build including their state, timing, commands, and execution details |
+| `unblock_job` | Unblock a blocked job in a Buildkite build to allow it to continue execution |
 | `list_artifacts` | List all artifacts for a build across all jobs, including file details, paths, sizes, MIME types, and download URLs |
 | `get_artifact` | Get detailed information about a specific artifact including its metadata, file size, SHA-1 hash, and download URL |
 | `list_annotations` | List all annotations for a build, including their context, style (success/info/warning/error), rendered HTML content, and creation timestamps |

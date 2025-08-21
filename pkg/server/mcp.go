@@ -98,6 +98,9 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	tools = addTool(
 		fromTypeTool(buildkite.GetJobs(client.Builds)),
 	)
+	tools = addTool(
+		fromTypeTool(buildkite.UnblockJob(client.Jobs)),
+	)
 
 	// Artifacts tools
 	tools = addTool(buildkite.ListArtifacts(clientAdapter))
