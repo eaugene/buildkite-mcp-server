@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -76,14 +75,6 @@ func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.To
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			if resp.StatusCode != http.StatusOK {
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read response body: %w", err)
-				}
-				return mcp.NewToolResultError(fmt.Sprintf("failed to list annotations: %s", string(body))), nil
-			}
-
 			result := PaginatedResult[buildkite.Annotation]{
 				Items: annotations,
 				Headers: map[string]string{
@@ -95,6 +86,11 @@ func ListAnnotations(client AnnotationsClient) (tool mcp.Tool, handler server.To
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal annotations: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("item_count", len(annotations)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}

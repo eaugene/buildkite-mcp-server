@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -113,6 +114,11 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 				return nil, fmt.Errorf("failed to marshal pipelines: %w", err)
 			}
 
+			span.SetAttributes(
+				attribute.Int("item_count", len(pipelines)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
@@ -188,6 +194,10 @@ func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHa
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal pipeline: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}
@@ -395,6 +405,10 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 				return nil, fmt.Errorf("failed to marshal issue: %w", err)
 			}
 
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
@@ -510,6 +524,11 @@ func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal pipeline: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }

@@ -180,12 +180,18 @@ func TestGetFailedExecutionsHTTPError(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestExecutionsClient{
 		GetFailedExecutionsFunc: func(ctx context.Context, org, slug, runID string, opt *buildkite.FailedExecutionsOptions) ([]buildkite.FailedExecution, *buildkite.Response, error) {
-			return []buildkite.FailedExecution{}, &buildkite.Response{
-				Response: &http.Response{
-					StatusCode: http.StatusNotFound,
-					Body:       io.NopCloser(strings.NewReader("Failed executions not found")),
+			resp := &http.Response{
+				Request: &http.Request{
+					Method: "GET",
+					URL:    nil,
 				},
-			}, nil
+				StatusCode: http.StatusNotFound,
+				Body:       io.NopCloser(strings.NewReader("Failed executions not found")),
+			}
+
+			return []buildkite.FailedExecution{}, &buildkite.Response{
+				Response: resp,
+			}, &buildkite.ErrorResponse{Response: resp, Message: "Failed executions not found"}
 		},
 	}
 

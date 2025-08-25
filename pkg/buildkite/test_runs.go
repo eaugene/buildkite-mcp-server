@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -70,14 +71,6 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			if resp.StatusCode != http.StatusOK {
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read response body: %w", err)
-				}
-				return mcp.NewToolResultError(fmt.Sprintf("failed to get test runs: %s", string(body))), nil
-			}
-
 			result := PaginatedResult[buildkite.TestRun]{
 				Items: testRuns,
 				Headers: map[string]string{
@@ -89,6 +82,11 @@ func ListTestRuns(client TestRunsClient) (tool mcp.Tool, handler server.ToolHand
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal test runs: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("item_count", len(testRuns)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}

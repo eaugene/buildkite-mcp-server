@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type UserClient interface {
@@ -26,19 +28,19 @@ func CurrentUser(client UserClient) (tool mcp.Tool, handler server.ToolHandlerFu
 			ctx, span := trace.Start(ctx, "buildkite.CurrentUser")
 			defer span.End()
 
-			user, resp, err := client.CurrentUser(ctx)
+			user, _, err := client.CurrentUser(ctx)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("failed to get current user"), nil
 			}
 
 			r, err := json.Marshal(&user)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal user: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}

@@ -58,11 +58,13 @@ func TestUserTokenOrganizationError(t *testing.T) {
 	ctx := context.Background()
 	client := &MockOrganizationsClient{
 		ListFunc: func(ctx context.Context, options *buildkite.OrganizationListOptions) ([]buildkite.Organization, *buildkite.Response, error) {
+			resp := &http.Response{
+				Request:    &http.Request{Method: "GET"},
+				StatusCode: 500,
+			}
 			return nil, &buildkite.Response{
-				Response: &http.Response{
-					StatusCode: 500,
-				},
-			}, nil
+				Response: resp,
+			}, &buildkite.ErrorResponse{Response: resp, Message: "Internal Server Error"}
 		},
 	}
 
@@ -73,10 +75,7 @@ func TestUserTokenOrganizationError(t *testing.T) {
 	request := createMCPRequest(t, map[string]any{})
 	result, err := handler(ctx, request)
 	assert.NoError(err)
-
-	textContent := getTextResult(t, result)
-
-	assert.Equal("failed to get current user organizations", textContent.Text)
+	assert.Contains(getTextResult(t, result).Text, "Internal Server Error")
 }
 
 func TestUserTokenOrganizationErrorNoOrganization(t *testing.T) {

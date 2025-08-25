@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -54,9 +55,6 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("Failed to list clusters"), nil
-			}
 			if len(clusters) == 0 {
 				return mcp.NewToolResultText("No clusters found"), nil
 			}
@@ -72,6 +70,11 @@ func ListClusters(client ClustersClient) (tool mcp.Tool, handler server.ToolHand
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal clusters response: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("item_count", len(clusters)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}
@@ -108,19 +111,20 @@ func GetCluster(client ClustersClient) (tool mcp.Tool, handler server.ToolHandle
 				attribute.String("cluster_id", clusterID),
 			)
 
-			cluster, resp, err := client.Get(ctx, orgSlug, clusterID)
+			cluster, _, err := client.Get(ctx, orgSlug, clusterID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("Failed to get cluster"), nil
 			}
 
 			r, err := json.Marshal(cluster)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal cluster response: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
