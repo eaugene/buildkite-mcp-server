@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"runtime"
 
+	buildkitelogs "github.com/buildkite/buildkite-logs"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/rs/zerolog"
-	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 type Globals struct {

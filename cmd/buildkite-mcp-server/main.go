@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	buildkitelogs "github.com/buildkite/buildkite-logs"
 	"github.com/buildkite/buildkite-mcp-server/internal/commands"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	buildkitelogs "github.com/wolfeidau/buildkite-logs-parquet"
 )
 
 var (
@@ -72,7 +72,7 @@ func main() {
 	}
 
 	// Create ParquetClient with cache URL from flag/env (uses upstream library's high-level client)
-	buildkiteLogsClient, err := buildkitelogs.NewClient(client, cli.CacheURL)
+	buildkiteLogsClient, err := buildkitelogs.NewClient(ctx, client, cli.CacheURL)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to create buildkite logs client")
 	}
