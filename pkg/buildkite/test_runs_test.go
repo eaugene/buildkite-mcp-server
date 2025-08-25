@@ -328,12 +328,14 @@ func TestListTestRunsHTTPError(t *testing.T) {
 	ctx := context.Background()
 	mockClient := &MockTestRunsClient{
 		ListFunc: func(ctx context.Context, org, slug string, opt *buildkite.TestRunsListOptions) ([]buildkite.TestRun, *buildkite.Response, error) {
+			resp := &http.Response{
+				Request:    &http.Request{Method: "GET"},
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader("Access denied")),
+			}
 			return []buildkite.TestRun{}, &buildkite.Response{
-				Response: &http.Response{
-					StatusCode: http.StatusForbidden,
-					Body:       io.NopCloser(strings.NewReader("Access denied")),
-				},
-			}, nil
+				Response: resp,
+			}, &buildkite.ErrorResponse{Response: resp, Message: "Access denied"}
 		},
 	}
 

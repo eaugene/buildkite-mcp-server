@@ -176,13 +176,15 @@ func TestGetArtifact_ErrorResponse(t *testing.T) {
 	ctx := context.Background()
 	client := &MockArtifactsClient{
 		DownloadArtifactByURLFunc: func(ctx context.Context, url string, writer io.Writer) (*buildkite.Response, error) {
+			resp := &http.Response{
+				Request:    &http.Request{Method: "GET"},
+				StatusCode: 404,
+				Status:     "404 Not Found",
+				Body:       io.NopCloser(bytes.NewBufferString(`{"message":"Artifact not found"}`)),
+			}
 			return &buildkite.Response{
-				Response: &http.Response{
-					StatusCode: 404,
-					Status:     "404 Not Found",
-					Body:       io.NopCloser(bytes.NewBufferString(`{"message":"Artifact not found"}`)),
-				},
-			}, nil
+				Response: resp,
+			}, &buildkite.ErrorResponse{Response: resp, Message: `{"message":"Artifact not found"}`}
 		},
 	}
 
@@ -194,7 +196,7 @@ func TestGetArtifact_ErrorResponse(t *testing.T) {
 	result, err := handler(ctx, req)
 	assert.NoError(err)
 	assert.NotNil(result)
-	assert.Contains(getTextResult(t, result).Text, "failed to get artifact")
+	assert.Contains(getTextResult(t, result).Text, `{"message":"Artifact not found"}`)
 }
 
 func TestBuildkiteClientAdapter_URLRewriting(t *testing.T) {

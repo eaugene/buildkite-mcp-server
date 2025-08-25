@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -60,23 +59,19 @@ func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc)
 				attribute.String("test_id", testID),
 			)
 
-			test, resp, err := client.Get(ctx, orgSlug, testSuiteSlug, testID)
+			test, _, err := client.Get(ctx, orgSlug, testSuiteSlug, testID)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read response body: %w", err)
-				}
-				return mcp.NewToolResultError(fmt.Sprintf("failed to get test: %s", string(body))), nil
 			}
 
 			r, err := json.Marshal(&test)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal test: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}

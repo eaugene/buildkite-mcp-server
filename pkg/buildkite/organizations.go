@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type OrganizationsClient interface {
@@ -26,13 +28,9 @@ func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler s
 			ctx, span := trace.Start(ctx, "buildkite.UserTokenOrganization")
 			defer span.End()
 
-			orgs, resp, err := client.List(ctx, &buildkite.OrganizationListOptions{})
+			orgs, _, err := client.List(ctx, &buildkite.OrganizationListOptions{})
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
-			}
-
-			if resp.StatusCode != 200 {
-				return mcp.NewToolResultError("failed to get current user organizations"), nil
 			}
 
 			if len(orgs) == 0 {
@@ -43,6 +41,10 @@ func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler s
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal user organizations: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	buildkitelogs "github.com/buildkite/buildkite-logs"
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.opentelemetry.io/otel/attribute"
@@ -262,6 +263,11 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 				return nil, fmt.Errorf("failed to marshal search results: %w", err)
 			}
 
+			span.SetAttributes(
+				attribute.Int("item_count", len(results)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
@@ -358,6 +364,11 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				return nil, fmt.Errorf("failed to marshal tail results: %w", err)
 			}
 
+			span.SetAttributes(
+				attribute.Int("item_count", len(entries)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
+
 			return mcp.NewToolResultText(string(r)), nil
 		}
 }
@@ -436,6 +447,10 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal file info: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}
@@ -536,6 +551,11 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal read results: %w", err)
 			}
+
+			span.SetAttributes(
+				attribute.Int("item_count", len(entries)),
+				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+			)
 
 			return mcp.NewToolResultText(string(r)), nil
 		}
