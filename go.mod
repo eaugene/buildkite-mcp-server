@@ -7,7 +7,7 @@ require (
 	github.com/buildkite/buildkite-logs v0.6.0
 	github.com/buildkite/go-buildkite/v4 v4.5.1
 	github.com/buildkite/terminal-to-html/v3 v3.16.8
-	github.com/cenkalti/backoff/v5 v5.0.2
+	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/huantt/plaintext-extractor v1.1.0
 	github.com/mark3labs/mcp-go v0.37.0
 	github.com/rs/zerolog v1.34.0
