@@ -349,12 +349,7 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 				testEngineRuns = build.TestEngine.Runs
 			}
 
-			r, err := json.Marshal(&testEngineRuns)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal test engine runs: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &testEngineRuns)
 		}
 }
 
@@ -435,12 +430,7 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 				return mcp.NewToolResultError("detail_level must be 'summary', 'detailed', or 'full'"), nil
 			}
 
-			r, err := json.Marshal(result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal build: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &result)
 		}
 }
 
@@ -550,11 +540,7 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			r, err := json.Marshal(&build)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal created build: %w", err)
-			}
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &build)
 		}
 }
 
@@ -694,12 +680,7 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 			// default to detailed
 			result := detailBuild(build)
 
-			r, err := json.Marshal(result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal build: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &result)
 		}
 }
 

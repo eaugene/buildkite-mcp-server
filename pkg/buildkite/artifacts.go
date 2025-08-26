@@ -192,15 +192,6 @@ func GetArtifact(client ArtifactsClient) (tool mcp.Tool, handler server.ToolHand
 				"encoding":   "base64",
 			}
 
-			r, err := json.Marshal(result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal artifact response: %w", err)
-			}
-
-			span.SetAttributes(
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
-			)
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &result)
 		}
 }

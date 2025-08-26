@@ -2,10 +2,7 @@ package buildkite
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -64,15 +61,6 @@ func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc)
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			r, err := json.Marshal(&test)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal test: %w", err)
-			}
-
-			span.SetAttributes(
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
-			)
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &test)
 		}
 }

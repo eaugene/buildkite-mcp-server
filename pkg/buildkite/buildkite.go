@@ -1,8 +1,14 @@
 package buildkite
 
 import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type PaginatedResult[T any] struct {
@@ -109,4 +115,17 @@ func applyClientSidePagination[T any](items []T, params ClientSidePaginationPara
 		HasNext:    params.Page < totalPages,
 		HasPrev:    params.Page > 1,
 	}
+}
+
+func mcpTextResult(span trace.Span, result any) (*mcp.CallToolResult, error) {
+	r, err := json.Marshal(result)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to marshal result: %v", err)), nil
+	}
+
+	span.SetAttributes(
+		attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
+	)
+
+	return mcp.NewToolResultText(string(r)), nil
 }
