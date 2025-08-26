@@ -2,14 +2,12 @@ package buildkite
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"iter"
 	"regexp"
 	"time"
 
 	buildkitelogs "github.com/buildkite/buildkite-logs"
-	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.opentelemetry.io/otel/attribute"
@@ -258,17 +256,11 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 				QueryTimeMS: queryTime.Milliseconds(),
 			}
 
-			r, err := json.Marshal(&response)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal search results: %w", err)
-			}
-
 			span.SetAttributes(
 				attribute.Int("item_count", len(results)),
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
 			)
 
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &response)
 		}
 }
 
@@ -359,17 +351,11 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				QueryTimeMS: queryTime.Milliseconds(),
 			}
 
-			r, err := json.Marshal(&response)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal tail results: %w", err)
-			}
-
 			span.SetAttributes(
 				attribute.Int("item_count", len(entries)),
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
 			)
 
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &response)
 		}
 }
 
@@ -443,16 +429,7 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 				QueryTimeMS: queryTime.Milliseconds(),
 			}
 
-			r, err := json.Marshal(&response)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal file info: %w", err)
-			}
-
-			span.SetAttributes(
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
-			)
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &response)
 		}
 }
 
@@ -547,16 +524,10 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 				QueryTimeMS: queryTime.Milliseconds(),
 			}
 
-			r, err := json.Marshal(&response)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal read results: %w", err)
-			}
-
 			span.SetAttributes(
 				attribute.Int("item_count", len(entries)),
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
 			)
 
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &response)
 		}
 }

@@ -421,11 +421,6 @@ func UnblockJob(client JobsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			r, err := json.Marshal(job)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal job: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &job)
 		}
 }

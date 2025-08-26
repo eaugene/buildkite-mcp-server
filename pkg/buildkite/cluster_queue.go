@@ -2,10 +2,7 @@ package buildkite
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -75,17 +72,11 @@ func ListClusterQueues(client ClusterQueuesClient) (tool mcp.Tool, handler serve
 				},
 			}
 
-			r, err := json.Marshal(&result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal cluster queues response: %w", err)
-			}
-
 			span.SetAttributes(
 				attribute.Int("item_count", len(queues)),
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
 			)
 
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &result)
 		}
 }
 
@@ -134,15 +125,6 @@ func GetClusterQueue(client ClusterQueuesClient) (tool mcp.Tool, handler server.
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			r, err := json.Marshal(queue)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal cluster queue response: %w", err)
-			}
-
-			span.SetAttributes(
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
-			)
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &queue)
 		}
 }

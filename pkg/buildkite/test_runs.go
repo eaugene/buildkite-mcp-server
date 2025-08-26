@@ -147,11 +147,6 @@ func GetTestRun(client TestRunsClient) (tool mcp.Tool, handler server.ToolHandle
 				return mcp.NewToolResultError(fmt.Sprintf("failed to get test run: %s", string(body))), nil
 			}
 
-			r, err := json.Marshal(&testRun)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal test run: %w", err)
-			}
-
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &testRun)
 		}
 }

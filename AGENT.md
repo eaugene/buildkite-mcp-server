@@ -23,3 +23,4 @@
 - Error handling: return errors up the stack, log at top level
 - Package names: lowercase, descriptive (buildkite, commands, trace, tokens)
 - Use contexts for cancellation and tracing throughout
+- Use `mcp.NewToolResultError` or `mcp.NewToolResultErrorFromErr` to handle errors in tools.

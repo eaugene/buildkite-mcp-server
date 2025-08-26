@@ -2,10 +2,7 @@ package buildkite
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/buildkite/buildkite-mcp-server/pkg/tokens"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	"github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -82,16 +79,11 @@ func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handle
 
 			// Always apply client-side pagination
 			result := applyClientSidePagination(failedExecutions, paginationParams)
-			r, err := json.Marshal(&result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal failed executions: %w", err)
-			}
 
 			span.SetAttributes(
 				attribute.Int("item_count", len(failedExecutions)),
-				attribute.Int("estimated_tokens", tokens.EstimateTokens(string(r))),
 			)
 
-			return mcp.NewToolResultText(string(r)), nil
+			return mcpTextResult(span, &result)
 		}
 }
