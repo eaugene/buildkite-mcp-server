@@ -69,7 +69,7 @@ func TestWaitForBuildCompletes(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := WaitForBuild(client)
+	tool, typedHandler, _ := WaitForBuild(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -123,7 +123,7 @@ func TestWaitForBuildTimeout(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := WaitForBuild(client)
+	tool, typedHandler, _ := WaitForBuild(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -159,7 +159,7 @@ func TestWaitForBuildMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	tool, typedHandler := WaitForBuild(client)
+	tool, typedHandler, _ := WaitForBuild(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -215,7 +215,7 @@ func TestGetBuildDefault(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := GetBuild(client)
+	tool, typedHandler, _ := GetBuild(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -264,7 +264,7 @@ func TestGetBuildWithJobSummary(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := GetBuild(client)
+	tool, typedHandler, _ := GetBuild(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -308,7 +308,7 @@ func TestListBuilds(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := ListBuilds(client)
+	tool, typedHandler, _ := ListBuilds(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -360,7 +360,7 @@ func TestListBuildsWithCustomPagination(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := ListBuilds(client)
+	tool, typedHandler, _ := ListBuilds(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -405,7 +405,7 @@ func TestListBuildsWithBranchFilter(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := ListBuilds(client)
+	tool, typedHandler, _ := ListBuilds(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -462,7 +462,7 @@ func TestGetBuildTestEngineRuns(t *testing.T) {
 		},
 	}
 
-	tool, typedHandler := GetBuildTestEngineRuns(client)
+	tool, typedHandler, _ := GetBuildTestEngineRuns(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
@@ -506,7 +506,7 @@ func TestGetBuildTestEngineRunsNoBuildTestEngine(t *testing.T) {
 		},
 	}
 
-	_, typedHandler := GetBuildTestEngineRuns(client)
+	_, typedHandler, _ := GetBuildTestEngineRuns(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 
 	request := createMCPRequest(t, map[string]any{
@@ -528,7 +528,7 @@ func TestGetBuildTestEngineRunsMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	_, typedHandler := GetBuildTestEngineRuns(client)
+	_, typedHandler, _ := GetBuildTestEngineRuns(client)
 	handler := mcp.NewTypedToolHandler(typedHandler)
 
 	// Test missing org parameter
@@ -595,7 +595,7 @@ func TestCreateBuild(t *testing.T) {
 		},
 	}
 
-	tool, handler := CreateBuild(client)
+	tool, handler, _ := CreateBuild(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

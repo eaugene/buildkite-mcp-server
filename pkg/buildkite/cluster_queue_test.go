@@ -47,7 +47,7 @@ func TestListClusterQueues(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListClusterQueues(client)
+	tool, handler, _ := ListClusterQueues(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -78,7 +78,7 @@ func TestGetClusterQueue(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetClusterQueue(client)
+	tool, handler, _ := GetClusterQueue(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

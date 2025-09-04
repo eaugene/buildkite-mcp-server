@@ -42,7 +42,7 @@ func TestGetTest(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetTest(client)
+	tool, handler, _ := GetTest(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -57,14 +57,14 @@ func TestGetTest(t *testing.T) {
 	assert.Contains(params, "test_id")
 
 	// Verify org is required
-	orgParam := params["org_slug"].(map[string]interface{})
+	orgParam := params["org_slug"].(map[string]any)
 	assert.Equal("string", orgParam["type"])
 
 	// Verify test_suite_slug is required
-	testSuiteParam := params["test_suite_slug"].(map[string]interface{})
+	testSuiteParam := params["test_suite_slug"].(map[string]any)
 	assert.Equal("string", testSuiteParam["type"])
 
 	// Verify test_id is required
-	testIDParam := params["test_id"].(map[string]interface{})
+	testIDParam := params["test_id"].(map[string]any)
 	assert.Equal("string", testIDParam["type"])
 }

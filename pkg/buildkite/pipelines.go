@@ -28,7 +28,7 @@ type ListPipelinesArgs struct {
 	DetailLevel string `json:"detail_level"` // "summary", "detailed", "full"
 }
 
-func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListPipelinesArgs]) {
+func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListPipelinesArgs], scopes []string) {
 	return mcp.NewTool("list_pipelines",
 			mcp.WithDescription("List all pipelines in an organization with their basic details, build counts, and current status"),
 			mcp.WithString("org_slug",
@@ -112,7 +112,7 @@ func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedTool
 			)
 
 			return mcpTextResult(span, &result)
-		}
+		}, []string{"read_pipelines"}
 }
 
 type GetPipelineArgs struct {
@@ -121,7 +121,7 @@ type GetPipelineArgs struct {
 	DetailLevel  string `json:"detail_level"` // "summary", "detailed", "full"
 }
 
-func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetPipelineArgs]) {
+func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetPipelineArgs], scopes []string) {
 	return mcp.NewTool("get_pipeline",
 			mcp.WithDescription("Get detailed information about a specific pipeline including its configuration, steps, environment variables, and build statistics"),
 			mcp.WithString("org_slug",
@@ -183,7 +183,7 @@ func GetPipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHa
 			}
 
 			return mcpTextResult(span, &result)
-		}
+		}, []string{"read_pipelines"}
 }
 
 // PipelineSummary contains essential pipeline fields for token-efficient responses
@@ -284,7 +284,7 @@ type CreatePipelineArgs struct {
 	Tags                      []string `json:"tags"`
 }
 
-func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs]) {
+func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs], scopes []string) {
 	return mcp.NewTool("create_pipeline",
 			mcp.WithDescription("Set up a new CI/CD pipeline in Buildkite with YAML configuration, repository connection, and cluster assignment"),
 			mcp.WithString("org_slug",
@@ -384,7 +384,7 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 			}
 
 			return mcpTextResult(span, &pipeline)
-		}
+		}, []string{"write_pipelines"}
 }
 
 type UpdatePipelineArgs struct {
@@ -401,7 +401,7 @@ type UpdatePipelineArgs struct {
 	Tags                      []string `json:"tags"` // Optional, labels to apply to the pipeline
 }
 
-func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[UpdatePipelineArgs]) {
+func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[UpdatePipelineArgs], []string) {
 	return mcp.NewTool("update_pipeline",
 			mcp.WithDescription("Modify an existing Buildkite pipeline's configuration, repository, settings, or metadata"),
 			mcp.WithString("org_slug",
@@ -495,5 +495,5 @@ func UpdatePipeline(client PipelinesClient) (mcp.Tool, mcp.TypedToolHandlerFunc[
 			}
 
 			return mcpTextResult(span, &pipeline)
-		}
+		}, []string{"write_pipelines"}
 }

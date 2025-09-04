@@ -39,7 +39,7 @@ func TestUserTokenOrganization(t *testing.T) {
 		},
 	}
 
-	tool, handler := UserTokenOrganization(client)
+	tool, handler, _ := UserTokenOrganization(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -68,7 +68,7 @@ func TestUserTokenOrganizationError(t *testing.T) {
 		},
 	}
 
-	tool, handler := UserTokenOrganization(client)
+	tool, handler, _ := UserTokenOrganization(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -92,7 +92,7 @@ func TestUserTokenOrganizationErrorNoOrganization(t *testing.T) {
 		},
 	}
 
-	tool, handler := UserTokenOrganization(client)
+	tool, handler, _ := UserTokenOrganization(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

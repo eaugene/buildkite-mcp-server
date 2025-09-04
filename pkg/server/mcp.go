@@ -2,6 +2,7 @@ package server
 
 import (
 	buildkitelogs "github.com/buildkite/buildkite-logs"
+	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
@@ -10,11 +11,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func fromTypeTool[T any](tool mcp.Tool, handler mcp.TypedToolHandlerFunc[T]) (mcp.Tool, server.ToolHandlerFunc) {
-	return tool, mcp.NewTypedToolHandler(handler)
-}
+func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) *server.MCPServer {
+	// Default configuration
+	cfg := &ToolsetConfig{
+		EnabledToolsets: []string{"all"},
+		ReadOnly:        false,
+	}
 
-func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client) *server.MCPServer {
+	// Apply options
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
 		version,
@@ -26,7 +34,8 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 
 	log.Info().Str("version", version).Msg("Starting Buildkite MCP server")
 
-	s.AddTools(BuildkiteTools(client, buildkiteLogsClient)...)
+	// Use toolset system with configuration
+	s.AddTools(BuildkiteTools(client, buildkiteLogsClient, WithReadOnly(cfg.ReadOnly), WithToolsets(cfg.EnabledToolsets...))...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
@@ -41,100 +50,67 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 	return s
 }
 
-func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client) []server.ServerTool {
-	// Create a client adapter so that we can use a mock or true client
-	clientAdapter := &buildkite.BuildkiteClientAdapter{Client: client}
+// ToolsetOption configures toolset behavior
+type ToolsetOption func(*ToolsetConfig)
 
-	var tools []server.ServerTool
+// ToolsetConfig holds configuration for toolset selection and behavior
+type ToolsetConfig struct {
+	EnabledToolsets []string
+	ReadOnly        bool
+}
 
-	addTool := func(tool mcp.Tool, handler server.ToolHandlerFunc) []server.ServerTool {
-		return append(tools, server.ServerTool{Tool: tool, Handler: handler})
+// WithToolsets enables specific toolsets
+func WithToolsets(toolsets ...string) ToolsetOption {
+	return func(cfg *ToolsetConfig) {
+		cfg.EnabledToolsets = toolsets
+	}
+}
+
+// WithReadOnly enables read-only mode which filters out write operations
+func WithReadOnly(readOnly bool) ToolsetOption {
+	return func(cfg *ToolsetConfig) {
+		cfg.ReadOnly = readOnly
+	}
+}
+
+// BuildkiteTools creates tools using the toolset system with functional options
+func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) []server.ServerTool {
+	// Default configuration
+	cfg := &ToolsetConfig{
+		EnabledToolsets: []string{"all"},
+		ReadOnly:        false,
 	}
 
-	// Cluster tools
-	tools = addTool(buildkite.GetCluster(client.Clusters))
-	tools = addTool(buildkite.ListClusters(client.Clusters))
+	// Apply options
+	for _, opt := range opts {
+		opt(cfg)
+	}
+	// Create builtin toolsets
+	builtinToolsets := toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient)
 
-	// Queue tools
-	tools = addTool(buildkite.GetClusterQueue(client.ClusterQueues))
-	tools = addTool(buildkite.ListClusterQueues(client.ClusterQueues))
+	// Create registry and register toolsets
+	registry := toolsets.NewToolsetRegistry()
+	for name, toolset := range builtinToolsets {
+		registry.Register(name, toolset)
+	}
 
-	// Pipeline tools
-	tools = addTool(
-		fromTypeTool(buildkite.GetPipeline(client.Pipelines)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.ListPipelines(client.Pipelines)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.CreatePipeline(client.Pipelines)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.UpdatePipeline(client.Pipelines)),
-	)
+	// Get enabled tools with read-only filtering
+	enabledTools := registry.GetEnabledTools(cfg.EnabledToolsets, cfg.ReadOnly)
 
-	// Build tools
-	tools = addTool(
-		fromTypeTool(buildkite.ListBuilds(client.Builds)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.GetBuild(client.Builds)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.GetBuildTestEngineRuns(client.Builds)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.CreateBuild(client.Builds)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.WaitForBuild(client.Builds)),
-	)
+	// Convert to ServerTool format
+	var serverTools []server.ServerTool
+	for _, toolDef := range enabledTools {
+		serverTools = append(serverTools, server.ServerTool{
+			Tool:    toolDef.Tool,
+			Handler: toolDef.Handler,
+		})
+	}
 
-	// User tools
-	tools = addTool(buildkite.CurrentUser(client.User))
-	tools = addTool(buildkite.UserTokenOrganization(client.Organizations))
+	log.Info().
+		Strs("enabled_toolsets", cfg.EnabledToolsets).
+		Bool("read_only", cfg.ReadOnly).
+		Int("tool_count", len(serverTools)).
+		Msg("Registered tools from toolsets")
 
-	// Job tools
-	tools = addTool(
-		fromTypeTool(buildkite.GetJobs(client.Builds)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.UnblockJob(client.Jobs)),
-	)
-
-	// Artifacts tools
-	tools = addTool(buildkite.ListArtifacts(clientAdapter))
-	tools = addTool(buildkite.GetArtifact(clientAdapter))
-
-	// Annotation tools
-	tools = addTool(buildkite.ListAnnotations(client.Annotations))
-
-	// Test Run tools
-	tools = addTool(buildkite.ListTestRuns(client.TestRuns))
-	tools = addTool(buildkite.GetTestRun(client.TestRuns))
-
-	// Test Execution tools
-	tools = addTool(buildkite.GetFailedTestExecutions(client.TestRuns))
-
-	// Test tools
-	tools = addTool(buildkite.GetTest(client.Tests))
-
-	// Job Log tools (Parquet-based)
-	tools = addTool(
-		fromTypeTool(buildkite.SearchLogs(buildkiteLogsClient)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.TailLogs(buildkiteLogsClient)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.GetLogsInfo(buildkiteLogsClient)),
-	)
-	tools = addTool(
-		fromTypeTool(buildkite.ReadLogs(buildkiteLogsClient)),
-	)
-
-	// Other tools
-	tools = addTool(buildkite.AccessToken(client.AccessTokens))
-
-	return tools
+	return serverTools
 }

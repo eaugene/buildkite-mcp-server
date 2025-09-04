@@ -13,7 +13,7 @@ type AccessTokenClient interface {
 	Get(ctx context.Context) (buildkite.AccessToken, *buildkite.Response, error)
 }
 
-func AccessToken(client AccessTokenClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func AccessToken(client AccessTokenClient) (tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) {
 	return mcp.NewTool("access_token",
 			mcp.WithDescription("Get information about the current API access token including its scopes and UUID"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
@@ -30,5 +30,5 @@ func AccessToken(client AccessTokenClient) (tool mcp.Tool, handler server.ToolHa
 			}
 
 			return mcpTextResult(span, &token)
-		}
+		}, []string{"read_user"}
 }

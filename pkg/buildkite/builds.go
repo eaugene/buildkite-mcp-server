@@ -143,7 +143,7 @@ func createPaginatedBuildResult[T any](builds []buildkite.Build, converter func(
 	}
 }
 
-func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListBuildsArgs]) {
+func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListBuildsArgs], scopes []string) {
 	return mcp.NewTool("list_builds",
 			mcp.WithDescription("List all builds for a pipeline with their status, commit information, and metadata"),
 			mcp.WithString("org_slug",
@@ -288,10 +288,10 @@ func ListBuilds(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandle
 			}
 
 			return mcp.NewToolResultText(string(r)), nil
-		}
+		}, []string{"read_builds"}
 }
 
-func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildTestEngineRunsArgs]) {
+func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildTestEngineRunsArgs], scopes []string) {
 	return mcp.NewTool("get_build_test_engine_runs",
 			mcp.WithDescription("Get test engine runs data for a specific build in Buildkite. This can be used to look up Test Runs."),
 			mcp.WithString("org_slug",
@@ -350,10 +350,10 @@ func GetBuildTestEngineRuns(client BuildsClient) (tool mcp.Tool, handler mcp.Typ
 			}
 
 			return mcpTextResult(span, &testEngineRuns)
-		}
+		}, []string{"read_builds"}
 }
 
-func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildArgs]) {
+func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetBuildArgs], scopes []string) {
 	return mcp.NewTool("get_build",
 			mcp.WithDescription("Get detailed information about a specific build including its jobs, timing, and execution details"),
 			mcp.WithString("org_slug",
@@ -431,7 +431,7 @@ func GetBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 			}
 
 			return mcpTextResult(span, &result)
-		}
+		}, []string{"read_builds"}
 }
 
 type Entry struct {
@@ -449,7 +449,7 @@ type CreateBuildArgs struct {
 	MetaData     []Entry `json:"metadata"`
 }
 
-func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs]) {
+func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreateBuildArgs], scopes []string) {
 	return mcp.NewTool("create_build",
 			mcp.WithDescription("Trigger a new build on a Buildkite pipeline for a specific commit and branch, with optional environment variables, metadata, and author information"),
 			mcp.WithString("org_slug",
@@ -541,7 +541,7 @@ func CreateBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandl
 			}
 
 			return mcpTextResult(span, &build)
-		}
+		}, []string{"write_builds"}
 }
 
 type WaitForBuildArgs struct {
@@ -551,7 +551,7 @@ type WaitForBuildArgs struct {
 	WaitTimeout  int    `json:"wait_timeout"`
 }
 
-func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[WaitForBuildArgs]) {
+func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[WaitForBuildArgs], scopes []string) {
 	return mcp.NewTool("wait_for_build",
 			mcp.WithDescription("Wait for a specific build to complete"),
 			mcp.WithString("org_slug",
@@ -681,7 +681,7 @@ func WaitForBuild(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHand
 			result := detailBuild(build)
 
 			return mcpTextResult(span, &result)
-		}
+		}, []string{"read_builds"}
 }
 
 func convertEntries(entries []Entry) map[string]string {
