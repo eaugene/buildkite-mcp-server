@@ -3,22 +3,26 @@ package commands
 import (
 	"context"
 
+	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/config"
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
 type StdioCmd struct {
-	config.Config // embed configuration options for stdio server
+	EnabledToolsets []string `help:"Comma-separated list of toolsets to enable (e.g., 'pipelines,builds,clusters'). Use 'all' to enable all toolsets." default:"all" env:"BUILDKITE_TOOLSETS"`
+	ReadOnly        bool     `help:"Enable read-only mode, which filters out write operations from all toolsets." default:"false" env:"BUILDKITE_READ_ONLY"`
+	config.Config            // embed configuration options for stdio server
 }
 
 func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
-	// Parse toolsets from string if provided via CLI
-	if len(c.EnabledToolsets) == 1 && c.EnabledToolsets[0] != "all" {
-		c.ParseToolsets(c.EnabledToolsets[0])
+	// Validate the enabled toolsets
+	if err := toolsets.ValidateToolsets(c.EnabledToolsets); err != nil {
+		return err
 	}
 
-	s := server.NewMCPServerWithConfig(globals.Version, globals.Client, globals.BuildkiteLogsClient, &c.Config)
+	s := server.NewMCPServer(globals.Version, globals.Client, globals.BuildkiteLogsClient,
+		server.WithReadOnly(c.ReadOnly), server.WithToolsets(c.EnabledToolsets...))
 
 	return mcpserver.ServeStdio(s,
 		mcpserver.WithStdioContextFunc(

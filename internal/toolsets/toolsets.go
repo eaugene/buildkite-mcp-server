@@ -1,10 +1,8 @@
-package tools
+package toolsets
 
 import (
-	"context"
-	"encoding/json"
+	"fmt"
 	"slices"
-	"strings"
 
 	buildkitelogs "github.com/buildkite/buildkite-logs"
 	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
@@ -201,13 +199,56 @@ func NewTool(tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) Too
 	}
 }
 
+const (
+	ToolsetClusters    = "clusters"
+	ToolsetPipelines   = "pipelines"
+	ToolsetBuilds      = "builds"
+	ToolsetArtifacts   = "artifacts"
+	ToolsetLogs        = "logs"
+	ToolsetTests       = "tests"
+	ToolsetAnnotations = "annotations"
+	ToolsetUser        = "user"
+)
+
+var ValidToolsets = []string{
+	ToolsetClusters,
+	ToolsetPipelines,
+	ToolsetBuilds,
+	ToolsetArtifacts,
+	ToolsetLogs,
+	ToolsetTests,
+	ToolsetAnnotations,
+	ToolsetUser,
+}
+
+// IsValidToolset checks if a toolset name is valid
+func IsValidToolset(name string) bool {
+	return slices.Contains(ValidToolsets, name)
+}
+
+// ValidateToolsets checks if all toolset names are valid
+func ValidateToolsets(names []string) error {
+
+	invalidToolsets := []string{}
+
+	for _, name := range names {
+		if !IsValidToolset(name) {
+			invalidToolsets = append(invalidToolsets, name)
+		}
+	}
+	if len(invalidToolsets) > 0 {
+		return fmt.Errorf("invalid toolset names: %v", invalidToolsets)
+	}
+	return nil
+}
+
 // CreateBuiltinToolsets creates the default toolsets with all available tools
 func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client) map[string]Toolset {
 	// Create a client adapter for artifact tools
 	clientAdapter := &buildkite.BuildkiteClientAdapter{Client: client}
 
 	return map[string]Toolset{
-		"clusters": {
+		ToolsetClusters: {
 			Name:        "Cluster Management",
 			Description: "Tools for managing Buildkite clusters and cluster queues",
 			Tools: []ToolDefinition{
@@ -221,7 +262,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				}),
 			},
 		},
-		"pipelines": {
+		ToolsetPipelines: {
 			Name:        "Pipeline Management",
 			Description: "Tools for managing Buildkite pipelines",
 			Tools: []ToolDefinition{
@@ -243,7 +284,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				}),
 			},
 		},
-		"builds": {
+		ToolsetBuilds: {
 			Name:        "Build Operations",
 			Description: "Tools for managing builds and jobs",
 			Tools: []ToolDefinition{
@@ -277,7 +318,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				}),
 			},
 		},
-		"artifacts": {
+		ToolsetArtifacts: {
 			Name:        "Artifact Management",
 			Description: "Tools for managing build artifacts",
 			Tools: []ToolDefinition{
@@ -285,7 +326,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				newToolFromFunc(func() (mcp.Tool, server.ToolHandlerFunc, []string) { return buildkite.GetArtifact(clientAdapter) }),
 			},
 		},
-		"tests": {
+		ToolsetTests: {
 			Name:        "Test Engine",
 			Description: "Tools for managing test runs and test results",
 			Tools: []ToolDefinition{
@@ -297,7 +338,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				newToolFromFunc(func() (mcp.Tool, server.ToolHandlerFunc, []string) { return buildkite.GetTest(client.Tests) }),
 			},
 		},
-		"logs": {
+		ToolsetLogs: {
 			Name:        "Log Management",
 			Description: "Tools for searching, reading, and analyzing job logs",
 			Tools: []ToolDefinition{
@@ -319,7 +360,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				}),
 			},
 		},
-		"annotations": {
+		ToolsetAnnotations: {
 			Name:        "Annotation Management",
 			Description: "Tools for managing build annotations",
 			Tools: []ToolDefinition{
@@ -328,7 +369,7 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 				}),
 			},
 		},
-		"user": {
+		ToolsetUser: {
 			Name:        "User & Organization",
 			Description: "Tools for user and organization information",
 			Tools: []ToolDefinition{
@@ -346,153 +387,4 @@ func CreateBuiltinToolsets(client *gobuildkite.Client, buildkiteLogsClient *buil
 func newToolFromFunc(toolFunc func() (mcp.Tool, server.ToolHandlerFunc, []string)) ToolDefinition {
 	tool, handler, scopes := toolFunc()
 	return NewTool(tool, handler, scopes)
-}
-
-// CreateIntrospectionTools creates tools for toolset discovery and introspection
-func CreateIntrospectionTools(registry *ToolsetRegistry) []ToolDefinition {
-	return []ToolDefinition{
-		NewTool(
-			mcp.NewTool("list_toolsets",
-				mcp.WithDescription("List all available toolsets with their descriptions and tool counts"),
-				mcp.WithToolAnnotation(mcp.ToolAnnotation{
-					Title:        "List Toolsets",
-					ReadOnlyHint: mcp.ToBoolPtr(true),
-				}),
-			),
-			func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				metadata := registry.GetMetadata()
-
-				result := map[string]any{
-					"toolsets":       metadata,
-					"total_toolsets": len(metadata),
-				}
-
-				jsonBytes, err := json.Marshal(result)
-				if err != nil {
-					return mcp.NewToolResultError(err.Error()), nil
-				}
-
-				return mcp.NewToolResultText(string(jsonBytes)), nil
-			},
-			[]string{},
-		),
-		NewTool(
-			mcp.NewTool("get_toolset_info",
-				mcp.WithDescription("Get detailed information about a specific toolset including its tools"),
-				mcp.WithString("toolset_name", mcp.Required()),
-				mcp.WithToolAnnotation(mcp.ToolAnnotation{
-					Title:        "Get Toolset Information",
-					ReadOnlyHint: mcp.ToBoolPtr(true),
-				}),
-			),
-			func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				toolsetName, err := request.RequireString("toolset_name")
-				if err != nil {
-					return mcp.NewToolResultError(err.Error()), nil
-				}
-
-				toolset, exists := registry.Get(toolsetName)
-				if !exists {
-					return mcp.NewToolResultError("toolset not found: " + toolsetName), nil
-				}
-
-				// Convert tools to a serializable format
-				tools := make([]map[string]any, len(toolset.Tools))
-				readOnlyCount := 0
-				allScopes := make(map[string]bool)
-				for i, tool := range toolset.Tools {
-					isReadOnly := tool.IsReadOnly()
-					if isReadOnly {
-						readOnlyCount++
-					}
-					// Collect all unique scopes for this toolset
-					for _, scope := range tool.RequiredScopes {
-						allScopes[scope] = true
-					}
-					tools[i] = map[string]any{
-						"name":        tool.Tool.Name,
-						"description": tool.Tool.Description,
-						"read_only":   isReadOnly,
-						"scopes":      tool.RequiredScopes,
-					}
-				}
-
-				// Convert scope map to sorted slice
-				toolsetScopes := make([]string, 0, len(allScopes))
-				for scope := range allScopes {
-					toolsetScopes = append(toolsetScopes, scope)
-				}
-				slices.Sort(toolsetScopes)
-
-				result := map[string]any{
-					"name":            toolset.Name,
-					"description":     toolset.Description,
-					"tool_count":      len(toolset.Tools),
-					"read_only_count": readOnlyCount,
-					"required_scopes": toolsetScopes,
-					"tools":           tools,
-				}
-
-				jsonBytes, err := json.Marshal(result)
-				if err != nil {
-					return mcp.NewToolResultError(err.Error()), nil
-				}
-
-				return mcp.NewToolResultText(string(jsonBytes)), nil
-			},
-			[]string{},
-		),
-		NewTool(
-			mcp.NewTool("get_required_scopes",
-				mcp.WithDescription("Get the minimum Buildkite API token scopes required for a given toolset configuration"),
-				mcp.WithString("toolsets"),
-				mcp.WithString("read_only"),
-				mcp.WithToolAnnotation(mcp.ToolAnnotation{
-					Title:        "Get Required Scopes",
-					ReadOnlyHint: mcp.ToBoolPtr(true),
-				}),
-			),
-			func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				toolsetsStr, err := request.RequireString("toolsets")
-				if err != nil {
-					return mcp.NewToolResultError(err.Error()), nil
-				}
-
-				readOnlyStr, _ := request.RequireString("read_only")
-				if readOnlyStr == "" {
-					readOnlyStr = "false" // default to false
-				}
-				readOnly := readOnlyStr == "true"
-
-				// Parse toolsets string
-				var enabledToolsets []string
-				if toolsetsStr == "all" {
-					enabledToolsets = []string{"all"}
-				} else {
-					enabledToolsets = strings.Split(toolsetsStr, ",")
-					for i, toolset := range enabledToolsets {
-						enabledToolsets[i] = strings.TrimSpace(toolset)
-					}
-				}
-
-				// Get required scopes
-				requiredScopes := registry.GetRequiredScopes(enabledToolsets, readOnly)
-
-				result := map[string]any{
-					"toolsets":        enabledToolsets,
-					"read_only_mode":  readOnly,
-					"required_scopes": requiredScopes,
-					"scope_count":     len(requiredScopes),
-				}
-
-				jsonBytes, err := json.Marshal(result)
-				if err != nil {
-					return mcp.NewToolResultError(err.Error()), nil
-				}
-
-				return mcp.NewToolResultText(string(jsonBytes)), nil
-			},
-			[]string{},
-		),
-	}
 }

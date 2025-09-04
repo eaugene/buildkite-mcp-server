@@ -2,9 +2,8 @@ package server
 
 import (
 	buildkitelogs "github.com/buildkite/buildkite-logs"
-	"github.com/buildkite/buildkite-mcp-server/internal/tools"
+	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
-	"github.com/buildkite/buildkite-mcp-server/pkg/config"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -12,7 +11,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewMCPServerWithConfig(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, cfg *config.Config) *server.MCPServer {
+func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) *server.MCPServer {
+	// Default configuration
+	cfg := &ToolsetConfig{
+		EnabledToolsets: []string{"all"},
+		ReadOnly:        false,
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	s := server.NewMCPServer(
 		"buildkite-mcp-server",
 		version,
@@ -25,12 +35,7 @@ func NewMCPServerWithConfig(version string, client *gobuildkite.Client, buildkit
 	log.Info().Str("version", version).Msg("Starting Buildkite MCP server")
 
 	// Use toolset system with configuration
-	if cfg != nil {
-		s.AddTools(BuildkiteTools(client, buildkiteLogsClient, WithConfig(cfg))...)
-	} else {
-		// Use default toolset configuration when no config provided
-		s.AddTools(BuildkiteTools(client, buildkiteLogsClient)...)
-	}
+	s.AddTools(BuildkiteTools(client, buildkiteLogsClient, WithReadOnly(cfg.ReadOnly), WithToolsets(cfg.EnabledToolsets...))...)
 
 	s.AddPrompt(mcp.NewPrompt("user_token_organization_prompt",
 		mcp.WithPromptDescription("When asked for detail of a users pipelines start by looking up the user's token organization"),
@@ -52,7 +57,6 @@ type ToolsetOption func(*ToolsetConfig)
 type ToolsetConfig struct {
 	EnabledToolsets []string
 	ReadOnly        bool
-	DynamicToolsets bool
 }
 
 // WithToolsets enables specific toolsets
@@ -69,29 +73,12 @@ func WithReadOnly(readOnly bool) ToolsetOption {
 	}
 }
 
-// WithDynamicToolsets enables dynamic toolset discovery tools
-func WithDynamicToolsets(dynamic bool) ToolsetOption {
-	return func(cfg *ToolsetConfig) {
-		cfg.DynamicToolsets = dynamic
-	}
-}
-
-// WithConfig applies settings from a config.Config struct
-func WithConfig(cfg *config.Config) ToolsetOption {
-	return func(toolsetCfg *ToolsetConfig) {
-		toolsetCfg.EnabledToolsets = cfg.EnabledToolsets
-		toolsetCfg.ReadOnly = cfg.ReadOnly
-		toolsetCfg.DynamicToolsets = cfg.DynamicToolsets
-	}
-}
-
 // BuildkiteTools creates tools using the toolset system with functional options
 func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) []server.ServerTool {
 	// Default configuration
 	cfg := &ToolsetConfig{
 		EnabledToolsets: []string{"all"},
 		ReadOnly:        false,
-		DynamicToolsets: false,
 	}
 
 	// Apply options
@@ -99,22 +86,16 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 		opt(cfg)
 	}
 	// Create builtin toolsets
-	builtinToolsets := tools.CreateBuiltinToolsets(client, buildkiteLogsClient)
+	builtinToolsets := toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient)
 
 	// Create registry and register toolsets
-	registry := tools.NewToolsetRegistry()
+	registry := toolsets.NewToolsetRegistry()
 	for name, toolset := range builtinToolsets {
 		registry.Register(name, toolset)
 	}
 
 	// Get enabled tools with read-only filtering
 	enabledTools := registry.GetEnabledTools(cfg.EnabledToolsets, cfg.ReadOnly)
-
-	// Add introspection tools if dynamic toolsets is enabled
-	if cfg.DynamicToolsets {
-		introspectionTools := tools.CreateIntrospectionTools(registry)
-		enabledTools = append(enabledTools, introspectionTools...)
-	}
 
 	// Convert to ServerTool format
 	var serverTools []server.ServerTool
@@ -128,7 +109,6 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	log.Info().
 		Strs("enabled_toolsets", cfg.EnabledToolsets).
 		Bool("read_only", cfg.ReadOnly).
-		Bool("dynamic_toolsets", cfg.DynamicToolsets).
 		Int("tool_count", len(serverTools)).
 		Msg("Registered tools from toolsets")
 
