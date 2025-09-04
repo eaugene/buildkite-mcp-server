@@ -14,7 +14,7 @@ type TestsClient interface {
 	Get(ctx context.Context, org, slug, testID string) (buildkite.Test, *buildkite.Response, error)
 }
 
-func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) {
 	return mcp.NewTool("get_test",
 			mcp.WithDescription("Get a specific test in Buildkite Test Engine. This provides additional metadata for failed test executions"),
 			mcp.WithString("org_slug",
@@ -62,5 +62,5 @@ func GetTest(client TestsClient) (tool mcp.Tool, handler server.ToolHandlerFunc)
 			}
 
 			return mcpTextResult(span, &test)
-		}
+		}, []string{"read_suites"}
 }

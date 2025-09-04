@@ -54,7 +54,7 @@ func TestListArtifacts(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListArtifacts(mockArtifactsClient)
+	tool, handler, _ := ListArtifacts(mockArtifactsClient)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -94,7 +94,7 @@ func TestGetArtifact(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetArtifact(client)
+	tool, handler, _ := GetArtifact(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 
@@ -121,7 +121,7 @@ func TestListArtifacts_MissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockArtifactsClient{}
 
-	_, handler := ListArtifacts(client)
+	_, handler, _ := ListArtifacts(client)
 
 	// Test missing org parameter
 	req := createMCPRequest(t, map[string]any{
@@ -160,7 +160,7 @@ func TestGetArtifact_MissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockArtifactsClient{}
 
-	_, handler := GetArtifact(client)
+	_, handler, _ := GetArtifact(client)
 
 	// Test missing url parameter
 	req := createMCPRequest(t, map[string]any{})
@@ -188,7 +188,7 @@ func TestGetArtifact_ErrorResponse(t *testing.T) {
 		},
 	}
 
-	_, handler := GetArtifact(client)
+	_, handler, _ := GetArtifact(client)
 
 	req := createMCPRequest(t, map[string]any{
 		"url": "https://example.com/nonexistent-artifact",

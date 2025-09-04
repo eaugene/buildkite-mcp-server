@@ -114,7 +114,7 @@ func TestSearchLogsHandler(t *testing.T) {
 		},
 	}
 
-	_, handler := SearchLogs(mockClient)
+	_, handler, _ := SearchLogs(mockClient)
 
 	t.Run("invalid regex pattern", func(t *testing.T) {
 		params := SearchLogsParams{
@@ -141,7 +141,7 @@ func TestSearchLogsHandler(t *testing.T) {
 			},
 		}
 
-		_, errorHandler := SearchLogs(errorClient)
+		_, errorHandler, _ := SearchLogs(errorClient)
 
 		params := SearchLogsParams{
 			JobLogsBaseParams: JobLogsBaseParams{
@@ -171,7 +171,7 @@ func TestTailLogsHandler(t *testing.T) {
 		},
 	}
 
-	_, handler := TailLogs(mockClient)
+	_, handler, _ := TailLogs(mockClient)
 
 	t.Run("default tail value", func(t *testing.T) {
 		params := TailLogsParams{
@@ -203,7 +203,7 @@ func TestGetLogsInfoHandler(t *testing.T) {
 		},
 	}
 
-	_, handler := GetLogsInfo(mockClient)
+	_, handler, _ := GetLogsInfo(mockClient)
 
 	params := JobLogsBaseParams{
 		OrgSlug:      "test-org",
@@ -230,7 +230,7 @@ func TestReadLogsHandler(t *testing.T) {
 		},
 	}
 
-	_, handler := ReadLogs(mockClient)
+	_, handler, _ := ReadLogs(mockClient)
 
 	params := ReadLogsParams{
 		JobLogsBaseParams: JobLogsBaseParams{

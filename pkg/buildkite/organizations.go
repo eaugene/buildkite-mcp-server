@@ -13,7 +13,7 @@ type OrganizationsClient interface {
 	List(ctx context.Context, options *buildkite.OrganizationListOptions) ([]buildkite.Organization, *buildkite.Response, error)
 }
 
-func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) {
 	return mcp.NewTool("user_token_organization",
 			mcp.WithDescription("Get the organization associated with the user token used for this request"),
 			mcp.WithToolAnnotation(mcp.ToolAnnotation{
@@ -34,7 +34,7 @@ func UserTokenOrganization(client OrganizationsClient) (tool mcp.Tool, handler s
 			}
 
 			return mcpTextResult(span, &orgs[0])
-		}
+		}, []string{"read_organizations"}
 }
 
 func HandleUserTokenOrganizationPrompt(

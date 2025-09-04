@@ -28,6 +28,12 @@ formatters:
       sections:
         - standard
         - default
+    gofmt:
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"
+        - pattern: "a[b:len(a)]"
+          replacement: "a[b:]"
   exclusions:
     generated: lax
     paths:

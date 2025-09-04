@@ -53,7 +53,7 @@ type UnblockJobArgs struct {
 	Fields       map[string]string `json:"fields,omitempty"`
 }
 
-func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobsArgs]) {
+func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobsArgs], scopes []string) {
 	return mcp.NewTool("get_jobs",
 			mcp.WithDescription("Get all jobs for a specific build including their state, timing, commands, and execution details"),
 			mcp.WithString("org_slug",
@@ -171,7 +171,7 @@ func GetJobs(client BuildsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFu
 			}
 
 			return mcp.NewToolResultText(string(r)), nil
-		}
+		}, []string{"read_builds"}
 }
 
 func GetJobLogs(client *buildkite.Client) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[GetJobLogsArgs]) {
@@ -354,7 +354,7 @@ func handleLargeLogFile(ctx context.Context, processedLog string, response JobLo
 	return mcp.NewToolResultText(string(r)), nil
 }
 
-func UnblockJob(client JobsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[UnblockJobArgs]) {
+func UnblockJob(client JobsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[UnblockJobArgs], scopes []string) {
 	return mcp.NewTool("unblock_job",
 			mcp.WithDescription("Unblock a blocked job in a Buildkite build to allow it to continue execution"),
 			mcp.WithString("org_slug",
@@ -422,5 +422,5 @@ func UnblockJob(client JobsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerF
 			}
 
 			return mcpTextResult(span, &job)
-		}
+		}, []string{"write_builds"}
 }

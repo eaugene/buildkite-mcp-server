@@ -39,7 +39,8 @@ func TestCurrentUser(t *testing.T) {
 		},
 	}
 
-	tool, handler := CurrentUser(client)
+	tool, handler, scopes := CurrentUser(client)
+	assert.Equal([]string{"read_user"}, scopes)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 

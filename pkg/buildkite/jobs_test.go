@@ -35,7 +35,7 @@ func TestGetJobs(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -96,7 +96,7 @@ func TestGetJobsWithStateFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -186,7 +186,7 @@ func TestGetJobsMissingParameters(t *testing.T) {
 	ctx := context.Background()
 	client := &MockBuildsClient{}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -262,7 +262,7 @@ func TestGetJobsPagination(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -383,7 +383,7 @@ func TestGetJobsAgentInfo(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -475,7 +475,7 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 		},
 	}
 
-	tool, handler := GetJobs(client)
+	tool, handler, _ := GetJobs(client)
 	require.NotNil(t, tool)
 	require.NotNil(t, handler)
 
@@ -594,7 +594,7 @@ func TestUnblockJob(t *testing.T) {
 
 	// Test tool definition
 	t.Run("ToolDefinition", func(t *testing.T) {
-		tool, _ := UnblockJob(&MockJobsClient{})
+		tool, _, _ := UnblockJob(&MockJobsClient{})
 		assert.Equal(t, "unblock_job", tool.Name)
 		assert.Contains(t, tool.Description, "Unblock a blocked job")
 	})
@@ -619,7 +619,7 @@ func TestUnblockJob(t *testing.T) {
 			},
 		}
 
-		_, handler := UnblockJob(mockJobs)
+		_, handler, _ := UnblockJob(mockJobs)
 
 		req := createMCPRequest(t, map[string]any{})
 		args := UnblockJobArgs{
@@ -656,7 +656,7 @@ func TestUnblockJob(t *testing.T) {
 			},
 		}
 
-		_, handler := UnblockJob(mockJobs)
+		_, handler, _ := UnblockJob(mockJobs)
 
 		req := createMCPRequest(t, map[string]any{})
 		args := UnblockJobArgs{
@@ -680,7 +680,7 @@ func TestUnblockJob(t *testing.T) {
 			},
 		}
 
-		_, handler := UnblockJob(mockJobs)
+		_, handler, _ := UnblockJob(mockJobs)
 
 		req := createMCPRequest(t, map[string]any{})
 		args := UnblockJobArgs{
@@ -697,7 +697,7 @@ func TestUnblockJob(t *testing.T) {
 
 	// Test missing parameters
 	t.Run("MissingParameters", func(t *testing.T) {
-		_, handler := UnblockJob(&MockJobsClient{})
+		_, handler, _ := UnblockJob(&MockJobsClient{})
 
 		// Test missing org parameter
 		req := createMCPRequest(t, map[string]any{})

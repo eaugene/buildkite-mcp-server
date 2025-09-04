@@ -13,7 +13,12 @@ type StdioCmd struct {
 }
 
 func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
-	s := server.NewMCPServer(globals.Version, globals.Client, globals.BuildkiteLogsClient)
+	// Parse toolsets from string if provided via CLI
+	if len(c.EnabledToolsets) == 1 && c.EnabledToolsets[0] != "all" {
+		c.ParseToolsets(c.EnabledToolsets[0])
+	}
+
+	s := server.NewMCPServerWithConfig(globals.Version, globals.Client, globals.BuildkiteLogsClient, &c.Config)
 
 	return mcpserver.ServeStdio(s,
 		mcpserver.WithStdioContextFunc(

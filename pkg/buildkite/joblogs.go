@@ -131,7 +131,7 @@ func formatLogEntries(entries []buildkitelogs.ParquetLogEntry) any {
 }
 
 // SearchLogs implements the search_logs MCP tool
-func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams]) {
+func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[SearchLogsParams], scopes []string) {
 	return mcp.NewTool("search_logs",
 			mcp.WithDescription("Search log entries using regex patterns with optional context lines. 💡 For recent failures, try 'tail_logs' first, then use search_logs with patterns like 'error|failed|exception' and limit: 10-20. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org_slug",
@@ -261,11 +261,12 @@ func SearchLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToo
 			)
 
 			return mcpTextResult(span, &response)
-		}
+		},
+		[]string{"read_build_logs"}
 }
 
 // TailLogs implements the tail_logs MCP tool
-func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams]) {
+func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[TailLogsParams], scopes []string) {
 	return mcp.NewTool("tail_logs",
 			mcp.WithDescription("Show the last N entries from the log file. 🔥 RECOMMENDED for failure diagnosis - most build failures appear in the final log entries. More token-efficient than read_logs for recent issues. The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org_slug",
@@ -356,11 +357,12 @@ func TailLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			)
 
 			return mcpTextResult(span, &response)
-		}
+		},
+		[]string{"read_build_logs"}
 }
 
 // GetLogsInfo implements the get_logs_info MCP tool
-func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[JobLogsBaseParams]) {
+func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[JobLogsBaseParams], scopes []string) {
 	return mcp.NewTool("get_logs_info",
 			mcp.WithDescription("Get metadata and statistics about the Parquet log file. 📊 RECOMMENDED as first step - check file size before reading large logs to plan your approach efficiently."),
 			mcp.WithString("org_slug",
@@ -430,11 +432,12 @@ func GetLogsInfo(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedTo
 			}
 
 			return mcpTextResult(span, &response)
-		}
+		},
+		[]string{"read_build_logs"}
 }
 
 // ReadLogs implements the read_logs MCP tool
-func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams]) {
+func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ReadLogsParams], scopes []string) {
 	return mcp.NewTool("read_logs",
 			mcp.WithDescription("Read log entries from the file, optionally starting from a specific row number. ⚠️ ALWAYS use 'limit' parameter to avoid excessive tokens. For recent failures, use 'tail_logs' instead. Recommended limits: investigation (100-500), exploration (use seek + small limits). The json format: {ts: timestamp_ms, c: content, rn: row_number}."),
 			mcp.WithString("org_slug",
@@ -529,5 +532,6 @@ func ReadLogs(client BuildkiteLogsClient) (tool mcp.Tool, handler mcp.TypedToolH
 			)
 
 			return mcpTextResult(span, &response)
-		}
+		},
+		[]string{"read_build_logs"}
 }

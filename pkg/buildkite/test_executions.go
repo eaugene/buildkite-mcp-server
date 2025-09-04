@@ -14,7 +14,7 @@ type TestExecutionsClient interface {
 	GetFailedExecutions(ctx context.Context, org, slug, runID string, opt *buildkite.FailedExecutionsOptions) ([]buildkite.FailedExecution, *buildkite.Response, error)
 }
 
-func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handler server.ToolHandlerFunc) {
+func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) {
 	return mcp.NewTool("get_failed_executions",
 			mcp.WithDescription("Get failed test executions for a specific test run in Buildkite Test Engine. Optionally get the expanded failure details such as full error messages and stack traces."),
 			mcp.WithString("org_slug",
@@ -85,5 +85,5 @@ func GetFailedTestExecutions(client TestExecutionsClient) (tool mcp.Tool, handle
 			)
 
 			return mcpTextResult(span, &result)
-		}
+		}, []string{"read_suites"}
 }

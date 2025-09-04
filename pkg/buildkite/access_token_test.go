@@ -53,7 +53,7 @@ func TestAccessToken(t *testing.T) {
 		},
 	}
 
-	tool, handler := AccessToken(client)
+	tool, handler, _ := AccessToken(client)
 	assert.NotNil(t, tool)
 	assert.NotNil(t, handler)
 

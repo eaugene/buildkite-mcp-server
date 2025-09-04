@@ -47,7 +47,7 @@ func TestListAnnotations(t *testing.T) {
 		},
 	}
 
-	tool, handler := ListAnnotations(client)
+	tool, handler, _ := ListAnnotations(client)
 	assert.NotNil(tool)
 	assert.NotNil(handler)
 	request := createMCPRequest(t, map[string]any{
