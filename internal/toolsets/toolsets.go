@@ -200,6 +200,7 @@ func NewTool(tool mcp.Tool, handler server.ToolHandlerFunc, scopes []string) Too
 }
 
 const (
+	ToolsetAll         = "all" // Special name to enable all toolsets
 	ToolsetClusters    = "clusters"
 	ToolsetPipelines   = "pipelines"
 	ToolsetBuilds      = "builds"
@@ -211,6 +212,7 @@ const (
 )
 
 var ValidToolsets = []string{
+	ToolsetAll,
 	ToolsetClusters,
 	ToolsetPipelines,
 	ToolsetBuilds,
