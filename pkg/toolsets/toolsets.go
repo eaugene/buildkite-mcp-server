@@ -95,6 +95,23 @@ func (tr *ToolsetRegistry) Get(name string) (Toolset, bool) {
 	return toolset, exists
 }
 
+// GetToolsForToolsets returns tools from specified toolset names, optionally filtering for read-only
+func (tr *ToolsetRegistry) GetToolsForToolsets(toolsetNames []string, readOnlyMode bool) []ToolDefinition {
+	var tools []ToolDefinition
+
+	for _, name := range toolsetNames {
+		if toolset, exists := tr.toolsets[name]; exists {
+			if readOnlyMode {
+				tools = append(tools, toolset.GetReadOnlyTools()...)
+			} else {
+				tools = append(tools, toolset.GetAllTools()...)
+			}
+		}
+	}
+
+	return tools
+}
+
 // List returns all registered toolset names
 func (tr *ToolsetRegistry) List() []string {
 	names := make([]string, 0, len(tr.toolsets))
