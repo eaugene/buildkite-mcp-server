@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/buildkite/buildkite-mcp-server/pkg/config"
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -20,7 +19,6 @@ type HTTPCmd struct {
 	UseSSE          bool     `help:"Use deprecated SSS transport instead of Streamable HTTP." default:"false"`
 	EnabledToolsets []string `help:"Comma-separated list of toolsets to enable (e.g., 'pipelines,builds,clusters'). Use 'all' to enable all toolsets." default:"all" env:"BUILDKITE_TOOLSETS"`
 	ReadOnly        bool     `help:"Enable read-only mode, which filters out write operations from all toolsets." default:"false" env:"BUILDKITE_READ_ONLY"`
-	config.Config            // embed configuration options for http server
 }
 
 func (c *HTTPCmd) Run(ctx context.Context, globals *Globals) error {

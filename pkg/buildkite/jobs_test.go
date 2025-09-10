@@ -506,73 +506,9 @@ func TestGetJobsPaginationWithFilter(t *testing.T) {
 	assert.Contains(t, textContentPassedPaginated.Text, `"has_prev":false`)
 }
 
-func TestGetJobLogs(t *testing.T) {
-	// Test the tool definition
-	t.Run("ToolDefinition", func(t *testing.T) {
-		tool, _ := GetJobLogs(nil)
-
-		assert.Equal(t, "get_job_logs", tool.Name)
-		assert.Contains(t, tool.Description, "Get the log output and metadata for a specific job, including content, size, and header timestamps")
-	})
-
-	t.Run("MissingParameters", func(t *testing.T) {
-		assert := require.New(t)
-		_, handler := GetJobLogs(&buildkite.Client{})
-
-		// Test missing org parameter
-		req := createMCPRequest(t, map[string]any{})
-		args := GetJobLogsArgs{
-			PipelineSlug: "test-pipeline",
-			BuildNumber:  "123",
-			JobUUID:      "job-123",
-		}
-		result, err := handler(context.Background(), req, args)
-		assert.NoError(err)
-		assert.NotNil(result)
-		assert.NotEmpty(result.Content)
-
-		// Test missing pipeline_slug parameter
-		req = createMCPRequest(t, map[string]any{})
-		args = GetJobLogsArgs{
-			OrgSlug:     "test-org",
-			BuildNumber: "123",
-			JobUUID:     "job-123",
-		}
-		result, err = handler(context.Background(), req, args)
-		assert.NoError(err)
-		assert.NotNil(result)
-		assert.NotEmpty(result.Content)
-
-		// Test missing build_number parameter
-		req = createMCPRequest(t, map[string]any{})
-		args = GetJobLogsArgs{
-			OrgSlug:      "test-org",
-			PipelineSlug: "test-pipeline",
-			JobUUID:      "job-123",
-		}
-		result, err = handler(context.Background(), req, args)
-		assert.NoError(err)
-		assert.NotNil(result)
-		assert.NotEmpty(result.Content)
-
-		// Test missing job_uuid parameter
-		req = createMCPRequest(t, map[string]any{})
-		args = GetJobLogsArgs{
-			OrgSlug:      "test-org",
-			PipelineSlug: "test-pipeline",
-			BuildNumber:  "123",
-		}
-		result, err = handler(context.Background(), req, args)
-		assert.NoError(err)
-		assert.NotNil(result)
-		assert.NotEmpty(result.Content)
-	})
-}
-
 // MockJobsClient for testing unblock functionality
 type MockJobsClient struct {
 	UnblockJobFunc func(ctx context.Context, org string, pipeline string, buildNumber string, jobID string, opt *buildkite.JobUnblockOptions) (buildkite.Job, *buildkite.Response, error)
-	GetJobLogFunc  func(ctx context.Context, org string, pipeline string, buildNumber string, jobID string) (buildkite.JobLog, *buildkite.Response, error)
 }
 
 func (m *MockJobsClient) UnblockJob(ctx context.Context, org string, pipeline string, buildNumber string, jobID string, opt *buildkite.JobUnblockOptions) (buildkite.Job, *buildkite.Response, error) {
@@ -580,13 +516,6 @@ func (m *MockJobsClient) UnblockJob(ctx context.Context, org string, pipeline st
 		return m.UnblockJobFunc(ctx, org, pipeline, buildNumber, jobID, opt)
 	}
 	return buildkite.Job{}, &buildkite.Response{}, nil
-}
-
-func (m *MockJobsClient) GetJobLog(ctx context.Context, org string, pipeline string, buildNumber string, jobID string) (buildkite.JobLog, *buildkite.Response, error) {
-	if m.GetJobLogFunc != nil {
-		return m.GetJobLogFunc(ctx, org, pipeline, buildNumber, jobID)
-	}
-	return buildkite.JobLog{}, &buildkite.Response{}, nil
 }
 
 func TestUnblockJob(t *testing.T) {
