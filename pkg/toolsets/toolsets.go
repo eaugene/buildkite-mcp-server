@@ -83,10 +83,33 @@ func (tr *ToolsetRegistry) Register(name string, toolset Toolset) {
 	tr.toolsets[name] = toolset
 }
 
+func (tr *ToolsetRegistry) RegisterToolsets(toolsets map[string]Toolset) {
+	for name, toolset := range toolsets {
+		tr.Register(name, toolset)
+	}
+}
+
 // Get retrieves a toolset by name
 func (tr *ToolsetRegistry) Get(name string) (Toolset, bool) {
 	toolset, exists := tr.toolsets[name]
 	return toolset, exists
+}
+
+// GetToolsForToolsets returns tools from specified toolset names, optionally filtering for read-only
+func (tr *ToolsetRegistry) GetToolsForToolsets(toolsetNames []string, readOnlyMode bool) []ToolDefinition {
+	var tools []ToolDefinition
+
+	for _, name := range toolsetNames {
+		if toolset, exists := tr.toolsets[name]; exists {
+			if readOnlyMode {
+				tools = append(tools, toolset.GetReadOnlyTools()...)
+			} else {
+				tools = append(tools, toolset.GetAllTools()...)
+			}
+		}
+	}
+
+	return tools
 }
 
 // List returns all registered toolset names

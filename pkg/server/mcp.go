@@ -2,8 +2,8 @@ package server
 
 import (
 	buildkitelogs "github.com/buildkite/buildkite-logs"
-	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
+	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -11,6 +11,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ToolsetOption configures toolset behavior
+type ToolsetOption func(*ToolsetConfig)
+
+// ToolsetConfig holds configuration for toolset selection and behavior
+type ToolsetConfig struct {
+	EnabledToolsets []string
+	ReadOnly        bool
+}
+
+// WithToolsets enables specific toolsets
+func WithToolsets(toolsets ...string) ToolsetOption {
+	return func(cfg *ToolsetConfig) {
+		cfg.EnabledToolsets = toolsets
+	}
+}
+
+// WithReadOnly enables read-only mode which filters out write operations
+func WithReadOnly(readOnly bool) ToolsetOption {
+	return func(cfg *ToolsetConfig) {
+		cfg.ReadOnly = readOnly
+	}
+}
+
+// NewMCPServer creates a new MCP server with the given configuration and toolsets
 func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) *server.MCPServer {
 	// Default configuration
 	cfg := &ToolsetConfig{
@@ -50,54 +74,25 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 	return s
 }
 
-// ToolsetOption configures toolset behavior
-type ToolsetOption func(*ToolsetConfig)
-
-// ToolsetConfig holds configuration for toolset selection and behavior
-type ToolsetConfig struct {
-	EnabledToolsets []string
-	ReadOnly        bool
-}
-
-// WithToolsets enables specific toolsets
-func WithToolsets(toolsets ...string) ToolsetOption {
-	return func(cfg *ToolsetConfig) {
-		cfg.EnabledToolsets = toolsets
-	}
-}
-
-// WithReadOnly enables read-only mode which filters out write operations
-func WithReadOnly(readOnly bool) ToolsetOption {
-	return func(cfg *ToolsetConfig) {
-		cfg.ReadOnly = readOnly
-	}
-}
-
 // BuildkiteTools creates tools using the toolset system with functional options
 func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelogs.Client, opts ...ToolsetOption) []server.ServerTool {
-	// Default configuration
 	cfg := &ToolsetConfig{
 		EnabledToolsets: []string{"all"},
 		ReadOnly:        false,
 	}
 
-	// Apply options
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	// Create builtin toolsets
-	builtinToolsets := toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient)
 
-	// Create registry and register toolsets
 	registry := toolsets.NewToolsetRegistry()
-	for name, toolset := range builtinToolsets {
-		registry.Register(name, toolset)
-	}
 
-	// Get enabled tools with read-only filtering
+	registry.RegisterToolsets(
+		toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient),
+	)
+
 	enabledTools := registry.GetEnabledTools(cfg.EnabledToolsets, cfg.ReadOnly)
 
-	// Convert to ServerTool format
 	var serverTools []server.ServerTool
 	for _, toolDef := range enabledTools {
 		serverTools = append(serverTools, server.ServerTool{
@@ -106,10 +101,13 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 		})
 	}
 
+	scopes := registry.GetRequiredScopes(cfg.EnabledToolsets, cfg.ReadOnly)
+
 	log.Info().
 		Strs("enabled_toolsets", cfg.EnabledToolsets).
 		Bool("read_only", cfg.ReadOnly).
 		Int("tool_count", len(serverTools)).
+		Strs("required_scopes", scopes).
 		Msg("Registered tools from toolsets")
 
 	return serverTools

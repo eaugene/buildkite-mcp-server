@@ -6,6 +6,7 @@
 - `go test ./internal/buildkite/...` - Run tests for specific package
 - `go test -run TestName` - Run single test by name
 - `make lint` - Run golangci-lint
+- `make lint-fix` - Run golangci-lint with auto-fix
 - `make check` - Run linting and tests
 - `make all` - Full build pipeline
 

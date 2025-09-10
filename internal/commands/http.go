@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/config"
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
+	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
