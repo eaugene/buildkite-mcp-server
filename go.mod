@@ -7,7 +7,7 @@ require (
 	github.com/buildkite/buildkite-logs v0.6.1
 	github.com/buildkite/go-buildkite/v4 v4.5.1
 	github.com/cenkalti/backoff/v5 v5.0.3
-	github.com/mark3labs/mcp-go v0.38.0
+	github.com/mark3labs/mcp-go v0.39.1
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
