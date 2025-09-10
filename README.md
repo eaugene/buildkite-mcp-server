@@ -159,7 +159,7 @@ Docker (recommended):
 }
 ```
 
-Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
+Local binary:
 
 ```jsonc
 # ~/.config/amp/settings.json
@@ -168,7 +168,7 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": "2000" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
   }
 }
@@ -212,7 +212,7 @@ Docker (recommended):
 }
 ```
 
-Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
+Local binary:
 
 ```jsonc
 {
@@ -220,7 +220,7 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": "2000" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
   }
 }
@@ -261,21 +261,6 @@ Local binary:
 }
 ```
 
-Optional (Local binary with [Job Log Token Threshold](#job-log-token-threshold)):
-
-```jsonc
-{
-  "buildkite": {
-    "command": "buildkite-mcp-server",
-    "args": ["stdio"],
-    "env": {
-      "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx",
-      "JOB_LOG_TOKEN_THRESHOLD": "2000"
-    }
-  }
-}
-```
-
 </details>
 
 <details>
@@ -295,7 +280,7 @@ extensions:
     timeout: 300
 ```
 
-Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
+Local binary:
 
 ```yaml
 extensions:
@@ -304,7 +289,7 @@ extensions:
     cmd: buildkite-mcp-server
     args: [stdio]
     enabled: true
-    envs: { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": "2000" }
+    envs: { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     type: stdio
     timeout: 300
 ```
@@ -355,7 +340,7 @@ extensions:
 }
 ```
 
-Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag enabled:
+Local binary:
 
 ```jsonc
 {
@@ -363,7 +348,7 @@ Local binary, with the [Job Log Token Threshold](#job-log-token-threshold) flag 
     "buildkite": {
       "command": "buildkite-mcp-server",
       "args": ["stdio"],
-      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx", "JOB_LOG_TOKEN_THRESHOLD": "2000" }
+      "env": { "BUILDKITE_API_TOKEN": "bkua_xxxxxxxx" }
     }
   }
 }
