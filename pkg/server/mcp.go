@@ -2,8 +2,8 @@ package server
 
 import (
 	buildkitelogs "github.com/buildkite/buildkite-logs"
-	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/buildkite"
+	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -85,14 +85,14 @@ func BuildkiteTools(client *gobuildkite.Client, buildkiteLogsClient *buildkitelo
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	// Create builtin toolsets
-	builtinToolsets := toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient)
 
-	// Create registry and register toolsets
+	// Create registry and
 	registry := toolsets.NewToolsetRegistry()
-	for name, toolset := range builtinToolsets {
-		registry.Register(name, toolset)
-	}
+
+	// register toolsets
+	registry.RegisterToolsets(
+		toolsets.CreateBuiltinToolsets(client, buildkiteLogsClient),
+	)
 
 	// Get enabled tools with read-only filtering
 	enabledTools := registry.GetEnabledTools(cfg.EnabledToolsets, cfg.ReadOnly)

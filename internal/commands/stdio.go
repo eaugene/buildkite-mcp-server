@@ -3,9 +3,9 @@ package commands
 import (
 	"context"
 
-	"github.com/buildkite/buildkite-mcp-server/internal/toolsets"
 	"github.com/buildkite/buildkite-mcp-server/pkg/config"
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
+	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
