@@ -24,6 +24,7 @@ docker run --pull=always -q -it --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx buildkite
 - [API Token Scopes](#-api-token-scopes)
 - [Installation](#-installation)
 - [Configuration & Usage](#️-configuration--usage)
+- [Toolsets](#-toolsets)
 - [Features](#️-tools--features)
 - [Screenshots](#-screenshots)
 - [Security](#-security)
@@ -398,11 +399,91 @@ Or you can manually configure:
 
 ---
 
+## 🧰 Toolsets
+
+The Buildkite MCP server organizes its tools into logical **toolsets** that can be enabled or disabled based on your needs. This allows you to control which Buildkite API functionality is available to your AI assistant.
+
+### Available Toolsets
+
+| Toolset | Description | Key Tools |
+|---------|-------------|-----------|
+| `clusters` | Cluster Management | `get_cluster`, `list_clusters`, `get_cluster_queue`, `list_cluster_queues` |
+| `pipelines` | Pipeline Management | `get_pipeline`, `list_pipelines`, `create_pipeline`, `update_pipeline` |
+| `builds` | Build Operations | `list_builds`, `get_build`, `create_build`, `wait_for_build`, `get_jobs`, `unblock_job` |
+| `artifacts` | Artifact Management | `list_artifacts`, `get_artifact` |
+| `logs` | Log Analysis | `search_logs`, `tail_logs`, `read_logs`, `get_logs_info` |
+| `tests` | Test Engine | `list_test_runs`, `get_test_run`, `get_failed_executions`, `get_test` |
+| `annotations` | Annotation Management | `list_annotations` |
+| `user` | User & Organization | `current_user`, `user_token_organization`, `access_token` |
+
+### Configuration
+
+Configure toolsets using environment variables or command-line flags:
+
+**Environment Variable:**
+```bash
+export BUILDKITE_TOOLSETS="user,pipelines,builds"
+```
+
+**Command Line:**
+```bash
+buildkite-mcp-server stdio --enabled-toolsets="user,pipelines,builds"
+```
+
+**Docker:**
+```bash
+docker run --rm -e BUILDKITE_API_TOKEN=bkua_xxxxx -e BUILDKITE_TOOLSETS="user,pipelines,builds" buildkite/mcp-server stdio
+```
+
+### Special Values
+
+- **`all`** - Enables all available toolsets (default)
+- **Read-only mode** - Add `--read-only` flag or `BUILDKITE_READ_ONLY=true` to filter out write operations
+
+### Recommended Configurations
+
+**Minimum (recommended baseline):**
+```bash
+BUILDKITE_TOOLSETS="user"
+```
+> Always include the `user` toolset as it provides essential user and organization information that many AI workflows depend on.
+
+**CI/CD Management:**
+```bash
+BUILDKITE_TOOLSETS="user,pipelines,builds"
+```
+
+**Debugging & Analysis:**
+```bash
+BUILDKITE_TOOLSETS="user,builds,logs,tests,annotations"
+```
+
+**Full Access:**
+```bash
+BUILDKITE_TOOLSETS="all"
+```
+
+### Read-Only Mode
+
+When read-only mode is enabled, tools that perform write operations (like `create_build`, `create_pipeline`, `unblock_job`) are automatically filtered out, leaving only safe read operations available.
+
+```bash
+# Read-only configuration
+export BUILDKITE_READ_ONLY=true
+export BUILDKITE_TOOLSETS="all"
+```
+
+This is particularly useful when you want to grant AI assistants access to query and analyze your Buildkite data without the ability to make changes.
+
+---
+
 ## 🔧 Environment Variables
 
 | Variable | Description | Default | Usage |
 |----------|-------------|---------|-------|
 | `BUILDKITE_API_TOKEN` | Your Buildkite API access token | Required | Authentication for all API requests |
+| `BUILDKITE_TOOLSETS` | Comma-separated list of toolsets to enable | `all` | Controls which tool groups are available |
+| `BUILDKITE_READ_ONLY` | Enable read-only mode (filters out write operations) | `false` | Security setting for AI assistants |
 | `HTTP_LISTEN_ADDR` | Address for HTTP server to listen on | `localhost:3000` | Used with `http` command |
 
 ---
