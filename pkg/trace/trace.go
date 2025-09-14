@@ -115,10 +115,27 @@ func (h *headerInjector) RoundTrip(req *http.Request) (*http.Response, error) {
 func NewHooks() *server.Hooks {
 	hooks := &server.Hooks{}
 
+	hooks.AddOnRegisterSession(func(ctx context.Context, session server.ClientSession) {
+		span := trace.SpanFromContext(ctx)
+		if span != nil {
+			span.SetAttributes(attribute.String("mcp.session.id", session.SessionID()))
+		}
+	})
+
+	hooks.AddBeforeCallTool(func(ctx context.Context, id any, message *mcp.CallToolRequest) {
+		span := trace.SpanFromContext(ctx)
+		if span != nil {
+			span.SetAttributes(
+				attribute.String("mcp.request.id", fmt.Sprintf("%v", id)),
+				attribute.String("mcp.method.name", message.Method),
+				attribute.String("mcp.tool.name", message.Params.Name),
+			)
+		}
+	})
+
 	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
 		span := trace.SpanFromContext(ctx)
 		if span != nil {
-			span.SetAttributes(attribute.String("mcp.method", string(method)))
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 		}
