@@ -6,6 +6,7 @@ import (
 	"github.com/buildkite/buildkite-mcp-server/pkg/server"
 	"github.com/buildkite/buildkite-mcp-server/pkg/toolsets"
 	mcpserver "github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 )
 
 type StdioCmd struct {
@@ -31,6 +32,8 @@ func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
 
 func setupContext(globals *Globals) mcpserver.StdioContextFunc {
 	return func(ctx context.Context) context.Context {
+
+		log.Info().Msg("Starting MCP server over stdio")
 
 		// add the logger to the context
 		return globals.Logger.WithContext(ctx)

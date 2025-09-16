@@ -53,6 +53,8 @@ func NewMCPServer(version string, client *gobuildkite.Client, buildkiteLogsClien
 		server.WithToolCapabilities(true),
 		server.WithPromptCapabilities(true),
 		server.WithResourceCapabilities(true, true),
+		server.WithToolHandlerMiddleware(trace.ToolHandlerFunc),
+		server.WithResourceHandlerMiddleware(trace.WithResourceHandlerFunc),
 		server.WithHooks(trace.NewHooks()),
 		server.WithLogging())
 

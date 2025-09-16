@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/alecthomas/kong"
 	buildkitelogs "github.com/buildkite/buildkite-logs"
 	"github.com/buildkite/buildkite-mcp-server/internal/commands"
 	"github.com/buildkite/buildkite-mcp-server/pkg/trace"
 	gobuildkite "github.com/buildkite/go-buildkite/v4"
+	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -17,15 +19,16 @@ var (
 	version = "dev"
 
 	cli struct {
-		Stdio       commands.StdioCmd `cmd:"" help:"stdio mcp server."`
-		HTTP        commands.HTTPCmd  `cmd:"" help:"http mcp server. (pass --use-sse to use SSE transport"`
-		Tools       commands.ToolsCmd `cmd:"" help:"list available tools." hidden:""`
-		APIToken    string            `help:"The Buildkite API token to use." env:"BUILDKITE_API_TOKEN"`
-		BaseURL     string            `help:"The base URL of the Buildkite API to use." env:"BUILDKITE_BASE_URL" default:"https://api.buildkite.com/"`
-		CacheURL    string            `help:"The blob storage URL for job logs cache." env:"BKLOG_CACHE_URL"`
-		Debug       bool              `help:"Enable debug mode."`
-		HTTPHeaders []string          `help:"Additional HTTP headers to send with every request. Format: 'Key: Value'" name:"http-header" env:"BUILDKITE_HTTP_HEADERS"`
-		Version     kong.VersionFlag
+		Stdio        commands.StdioCmd `cmd:"" help:"stdio mcp server."`
+		HTTP         commands.HTTPCmd  `cmd:"" help:"http mcp server. (pass --use-sse to use SSE transport"`
+		Tools        commands.ToolsCmd `cmd:"" help:"list available tools." hidden:""`
+		APIToken     string            `help:"The Buildkite API token to use." env:"BUILDKITE_API_TOKEN"`
+		BaseURL      string            `help:"The base URL of the Buildkite API to use." env:"BUILDKITE_BASE_URL" default:"https://api.buildkite.com/"`
+		CacheURL     string            `help:"The blob storage URL for job logs cache." env:"BKLOG_CACHE_URL"`
+		Debug        bool              `help:"Enable debug mode." env:"DEBUG"`
+		OTELExporter string            `help:"OpenTelemetry exporter to enable. Options are 'otlp', 'grpc', or 'noop'." enum:"otlp, grpc, noop" env:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"noop"`
+		HTTPHeaders  []string          `help:"Additional HTTP headers to send with every request. Format: 'Key: Value'" name:"http-header" env:"BUILDKITE_HTTP_HEADERS"`
+		Version      kong.VersionFlag
 	}
 )
 
@@ -44,13 +47,19 @@ func main() {
 
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
+	// are we in an interactive terminal?
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, FormatTimestamp: func(i any) string {
+			return time.Now().Format(time.Stamp)
+		}}).With().Caller().Logger()
+	}
+
 	if cli.Debug {
 		logger = logger.Level(zerolog.DebugLevel).With().Caller().Logger()
 	}
 	log.Logger = logger
-	zerolog.DefaultContextLogger = &logger
 
-	tp, err := trace.NewProvider(ctx, "buildkite-mcp-server", version)
+	tp, err := trace.NewProvider(ctx, cli.OTELExporter, "buildkite-mcp-server", version)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to create trace provider")
 	}
