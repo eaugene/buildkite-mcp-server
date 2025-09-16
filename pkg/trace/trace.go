@@ -117,7 +117,7 @@ func newResource(cxt context.Context, name, version string) (*resource.Resource,
 
 func newExporter(ctx context.Context, exporter string) (sdktrace.SpanExporter, error) {
 	switch exporter {
-	case "otlp":
+	case "http/protobuf":
 		return otlptracehttp.New(ctx)
 	case "grpc":
 		return otlptracegrpc.New(ctx)

@@ -26,7 +26,7 @@ var (
 		BaseURL      string            `help:"The base URL of the Buildkite API to use." env:"BUILDKITE_BASE_URL" default:"https://api.buildkite.com/"`
 		CacheURL     string            `help:"The blob storage URL for job logs cache." env:"BKLOG_CACHE_URL"`
 		Debug        bool              `help:"Enable debug mode." env:"DEBUG"`
-		OTELExporter string            `help:"OpenTelemetry exporter to enable. Options are 'otlp', 'grpc', or 'noop'." enum:"otlp, grpc, noop" env:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"noop"`
+		OTELExporter string            `help:"OpenTelemetry exporter to enable. Options are 'http/protobuf', 'grpc', or 'noop'." enum:"http/protobuf, grpc, noop" env:"OTEL_EXPORTER_OTLP_PROTOCOL" default:"noop"`
 		HTTPHeaders  []string          `help:"Additional HTTP headers to send with every request. Format: 'Key: Value'" name:"http-header" env:"BUILDKITE_HTTP_HEADERS"`
 		Version      kong.VersionFlag
 	}

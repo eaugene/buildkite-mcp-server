@@ -10,7 +10,7 @@ import (
 func TestNewProvider(t *testing.T) {
 	assert := require.New(t)
 
-	provider, err := NewProvider(context.Background(), "otlp", "test", "1.2.3")
+	provider, err := NewProvider(context.Background(), "http/protobuf", "test", "1.2.3")
 	assert.NoError(err)
 
 	assert.NotNil(provider)
