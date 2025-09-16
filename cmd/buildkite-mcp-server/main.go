@@ -45,30 +45,30 @@ func main() {
 		kong.BindTo(ctx, (*context.Context)(nil)),
 	)
 
-	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
-
-	// are we in an interactive terminal?
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, FormatTimestamp: func(i any) string {
-			return time.Now().Format(time.Stamp)
-		}}).With().Caller().Logger()
-	}
-
+	level := zerolog.InfoLevel
 	if cli.Debug {
-		logger = logger.Level(zerolog.DebugLevel).With().Caller().Logger()
+		level = zerolog.DebugLevel
 	}
-	log.Logger = logger
+
+	log.Logger = zerolog.New(os.Stderr).Level(level).With().Timestamp().Stack().Logger()
+
+	// are we in an interactive terminal use a console writer
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, FormatTimestamp: func(i any) string {
+			return time.Now().Format(time.Stamp)
+		}}).Level(level).With().Stack().Logger()
+	}
 
 	tp, err := trace.NewProvider(ctx, cli.OTELExporter, "buildkite-mcp-server", version)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to create trace provider")
+		log.Fatal().Err(err).Msg("failed to create trace provider")
 	}
 	defer func() {
 		_ = tp.Shutdown(ctx)
 	}()
 
 	// Parse additional headers into a map
-	headers := commands.ParseHeaders(cli.HTTPHeaders, logger)
+	headers := commands.ParseHeaders(cli.HTTPHeaders)
 
 	client, err := gobuildkite.NewOpts(
 		gobuildkite.WithTokenAuth(cli.APIToken),
@@ -77,31 +77,31 @@ func main() {
 		gobuildkite.WithBaseURL(cli.BaseURL),
 	)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to create buildkite client")
+		log.Fatal().Err(err).Msg("failed to create buildkite client")
 	}
 
 	// Create ParquetClient with cache URL from flag/env (uses upstream library's high-level client)
 	buildkiteLogsClient, err := buildkitelogs.NewClient(ctx, client, cli.CacheURL)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to create buildkite logs client")
+		log.Fatal().Err(err).Msg("failed to create buildkite logs client")
 	}
 
 	buildkiteLogsClient.Hooks().AddAfterCacheCheck(func(ctx context.Context, result *buildkitelogs.CacheCheckResult) {
-		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Checked job logs cache")
+		log.Ctx(ctx).Debug().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Checked job logs cache")
 	})
 
 	buildkiteLogsClient.Hooks().AddAfterLogDownload(func(ctx context.Context, result *buildkitelogs.LogDownloadResult) {
-		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Downloaded and cached job logs")
+		log.Ctx(ctx).Debug().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Downloaded and cached job logs")
 	})
 
 	buildkiteLogsClient.Hooks().AddAfterLogParsing(func(ctx context.Context, result *buildkitelogs.LogParsingResult) {
-		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Parsed logs to Parquet")
+		log.Ctx(ctx).Debug().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Parsed logs to Parquet")
 	})
 
 	buildkiteLogsClient.Hooks().AddAfterBlobStorage(func(ctx context.Context, result *buildkitelogs.BlobStorageResult) {
-		log.Ctx(ctx).Info().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Stored logs to blob storage")
+		log.Ctx(ctx).Debug().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Stored logs to blob storage")
 	})
 
-	err = cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient, Logger: logger})
+	err = cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient})
 	cmd.FatalIfErrorf(err)
 }

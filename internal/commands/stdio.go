@@ -32,10 +32,9 @@ func (c *StdioCmd) Run(ctx context.Context, globals *Globals) error {
 
 func setupContext(globals *Globals) mcpserver.StdioContextFunc {
 	return func(ctx context.Context) context.Context {
-
 		log.Info().Msg("Starting MCP server over stdio")
 
 		// add the logger to the context
-		return globals.Logger.WithContext(ctx)
+		return log.Logger.WithContext(ctx)
 	}
 }
