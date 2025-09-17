@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -45,23 +46,16 @@ func main() {
 		kong.BindTo(ctx, (*context.Context)(nil)),
 	)
 
-	level := zerolog.InfoLevel
-	if cli.Debug {
-		level = zerolog.DebugLevel
-	}
+	log.Logger = setupLogger(cli.Debug)
 
-	log.Logger = zerolog.New(os.Stderr).Level(level).With().Timestamp().Stack().Logger()
+	err := run(ctx, cmd)
+	cmd.FatalIfErrorf(err)
+}
 
-	// are we in an interactive terminal use a console writer
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, FormatTimestamp: func(i any) string {
-			return time.Now().Format(time.Stamp)
-		}}).Level(level).With().Stack().Logger()
-	}
-
+func run(ctx context.Context, cmd *kong.Context) error {
 	tp, err := trace.NewProvider(ctx, cli.OTELExporter, "buildkite-mcp-server", version)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create trace provider")
+		return fmt.Errorf("failed to create trace provider: %w", err)
 	}
 	defer func() {
 		_ = tp.Shutdown(ctx)
@@ -77,13 +71,13 @@ func main() {
 		gobuildkite.WithBaseURL(cli.BaseURL),
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create buildkite client")
+		return fmt.Errorf("failed to create buildkite client: %w", err)
 	}
 
 	// Create ParquetClient with cache URL from flag/env (uses upstream library's high-level client)
 	buildkiteLogsClient, err := buildkitelogs.NewClient(ctx, client, cli.CacheURL)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create buildkite logs client")
+		return fmt.Errorf("failed to create buildkite logs client: %w", err)
 	}
 
 	buildkiteLogsClient.Hooks().AddAfterCacheCheck(func(ctx context.Context, result *buildkitelogs.CacheCheckResult) {
@@ -102,6 +96,24 @@ func main() {
 		log.Ctx(ctx).Debug().Str("org", result.Org).Str("pipeline", result.Pipeline).Str("build", result.Build).Str("job", result.Job).Dur("time_taken", result.Duration).Msg("Stored logs to blob storage")
 	})
 
-	err = cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient})
-	cmd.FatalIfErrorf(err)
+	return cmd.Run(&commands.Globals{Version: version, Client: client, BuildkiteLogsClient: buildkiteLogsClient})
+}
+
+func setupLogger(debug bool) zerolog.Logger {
+	var logger zerolog.Logger
+	level := zerolog.InfoLevel
+	if debug {
+		level = zerolog.DebugLevel
+	}
+
+	logger = zerolog.New(os.Stderr).Level(level).With().Timestamp().Stack().Logger()
+
+	// are we in an interactive terminal use a console writer
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stderr, FormatTimestamp: func(i any) string {
+			return time.Now().Format(time.Stamp)
+		}}).Level(level).With().Stack().Logger()
+	}
+
+	return logger
 }
