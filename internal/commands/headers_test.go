@@ -2,8 +2,6 @@ package commands
 
 import (
 	"testing"
-
-	"github.com/rs/zerolog"
 )
 
 func TestParseHeaders(t *testing.T) {
@@ -22,10 +20,8 @@ func TestParseHeaders(t *testing.T) {
 		{[]string{"A:1", "NoColon", "B:2"}, map[string]string{"A": "1", "B": "2"}},
 	}
 
-	logger := zerolog.Nop()
-
 	for _, tt := range tests {
-		got := ParseHeaders(tt.input, logger)
+		got := ParseHeaders(tt.input)
 		if len(got) != len(tt.want) {
 			t.Errorf("parseHeaders(%v) = %v, want %v", tt.input, got, tt.want)
 			continue
