@@ -283,7 +283,7 @@ type CreatePipelineArgs struct {
 	SkipQueuedBranchBuilds    bool     `json:"skip_queued_branch_builds"`
 	CancelRunningBranchBuilds bool     `json:"cancel_running_branch_builds"`
 	Tags                      []string `json:"tags"`
-	CreateWebhook             bool     `json:"create_webhook"`
+	CreateWebhook             *bool    `json:"create_webhook"`
 }
 
 func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs], scopes []string) {
@@ -389,7 +389,13 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			if args.CreateWebhook {
+			// create webhooks by default to align with the behavior in the dashboard
+			createWebhook := true
+			if args.CreateWebhook != nil {
+				createWebhook = *args.CreateWebhook
+			}
+
+			if createWebhook {
 				_, err := client.AddWebhook(ctx, args.OrgSlug, pipeline.Slug)
 				if err != nil {
 					result := map[string]any{

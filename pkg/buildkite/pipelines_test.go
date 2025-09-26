@@ -147,6 +147,7 @@ steps:
 `
 
 	ctx := context.Background()
+	webhookCalled := false
 	client := &MockPipelinesClient{
 		CreateFunc: func(ctx context.Context, org string, p buildkite.CreatePipeline) (buildkite.Pipeline, *buildkite.Response, error) {
 
@@ -170,6 +171,16 @@ steps:
 					},
 				}, nil
 		},
+		AddWebhookFunc: func(ctx context.Context, org string, slug string) (*buildkite.Response, error) {
+			assert.Equal("org", org)
+			assert.Equal("test-pipeline", slug)
+			webhookCalled = true
+			return &buildkite.Response{
+				Response: &http.Response{
+					StatusCode: 201,
+				},
+			}, nil
+		},
 	}
 
 	tool, handler, _ := CreatePipeline(client)
@@ -186,12 +197,16 @@ steps:
 		Description:   "A test pipeline",
 		Configuration: testPipelineDefinition,
 		Tags:          []string{"tag1", "tag2"},
+		CreateWebhook: nil,
 	}
 
 	result, err := handler(ctx, request, args)
 	assert.NoError(err)
+	assert.True(webhookCalled, "AddWebhook should have been called when CreateWebhook is nil")
+
 	textContent := getTextResult(t, result)
-	assert.Equal(`{"id":"123","name":"Test Pipeline","slug":"test-pipeline","created_at":"0001-01-01T00:00:00Z","skip_queued_branch_builds":false,"cancel_running_branch_builds":false,"cluster_id":"cluster-123","tags":["tag1","tag2"],"provider":{"id":"","webhook_url":"","settings":null}}`, textContent.Text)
+	assert.Contains(textContent.Text, `"webhook":{"created":true,"note":"Pipeline and webhook created successfully."}`)
+	assert.Contains(textContent.Text, `"pipeline":{"id":"123","name":"Test Pipeline","slug":"test-pipeline"`)
 }
 
 func TestCreatePipelineWithWebhook(t *testing.T) {
@@ -210,6 +225,7 @@ steps:
 
 	ctx := context.Background()
 	webhookCalled := false
+	createWebhook := true
 	client := &MockPipelinesClient{
 		CreateFunc: func(ctx context.Context, org string, p buildkite.CreatePipeline) (buildkite.Pipeline, *buildkite.Response, error) {
 
@@ -262,7 +278,7 @@ steps:
 		Description:   "A test pipeline",
 		Configuration: testPipelineDefinition,
 		Tags:          []string{"tag1", "tag2"},
-		CreateWebhook: true,
+		CreateWebhook: &createWebhook,
 	}
 
 	result, err := handler(ctx, request, args)
@@ -290,6 +306,7 @@ steps:
 
 	ctx := context.Background()
 	webhookCalled := false
+	createWebhook := true
 	client := &MockPipelinesClient{
 		CreateFunc: func(ctx context.Context, org string, p buildkite.CreatePipeline) (buildkite.Pipeline, *buildkite.Response, error) {
 
@@ -333,7 +350,7 @@ steps:
 		Description:   "A test pipeline",
 		Configuration: testPipelineDefinition,
 		Tags:          []string{"tag1", "tag2"},
-		CreateWebhook: true,
+		CreateWebhook: &createWebhook,
 	}
 
 	result, err := handler(ctx, request, args)
