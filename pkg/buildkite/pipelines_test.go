@@ -152,9 +152,9 @@ steps:
 
 			// validate required fields
 			assert.Equal("org", org)
+			assert.Equal("cluster-123", p.ClusterID)
 			assert.Equal("Test Pipeline", p.Name)
 			assert.Equal("https://example.com/repo.git", p.Repository)
-			assert.Equal("cluster-123", p.ClusterID)
 			assert.Equal(testPipelineDefinition, p.Configuration)
 
 			return buildkite.Pipeline{
@@ -365,6 +365,7 @@ steps:
 			// validate required fields
 			assert.Equal("org", org)
 			assert.Equal("test-pipeline", pipeline)
+
 			assert.Equal(testPipelineDefinition, p.Configuration)
 
 			return buildkite.Pipeline{
