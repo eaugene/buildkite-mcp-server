@@ -317,7 +317,7 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 				mcp.Description("Cancel running builds when new builds are created on the same branch"),
 			),
 			mcp.WithBoolean("create_webhook",
-				mcp.Description("Create a GitHub webhook to trigger builds in response to pull-request and push events. Only works for pipelines and repositories configured with the Buildkite GitHub app"),
+				mcp.Description("Create a GitHub webhook to trigger builds in response to pull-request and push events"),
 				mcp.DefaultBool(true),
 			),
 			mcp.WithArray("tags",
