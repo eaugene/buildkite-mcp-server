@@ -29,6 +29,17 @@ type ListPipelinesArgs struct {
 	DetailLevel string `json:"detail_level"` // "summary", "detailed", "full"
 }
 
+type CreatePipelineResult struct {
+	Pipeline buildkite.Pipeline `json:"pipeline"`
+	Webhook  *WebhookInfo       `json:"webhook,omitempty"`
+}
+
+type WebhookInfo struct {
+	Created bool   `json:"created"`
+	Error   string `json:"error,omitempty"`
+	Note    string `json:"note,omitempty"`
+}
+
 func ListPipelines(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[ListPipelinesArgs], scopes []string) {
 	return mcp.NewTool("list_pipelines",
 			mcp.WithDescription("List all pipelines in an organization with their basic details, build counts, and current status"),
@@ -397,29 +408,26 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 
 			if createWebhook {
 				_, err := client.AddWebhook(ctx, args.OrgSlug, pipeline.Slug)
-				if err != nil {
-					result := map[string]any{
-						"pipeline": pipeline,
-						"webhook": map[string]any{
-							"created": false,
-							"error":   err.Error(),
-							"note":    "Pipeline created successfully, but webhook creation failed.",
-						},
-					}
-					return mcpTextResult(span, &result)
-				}
-
-				result := map[string]any{
-					"pipeline": pipeline,
-					"webhook": map[string]any{
-						"created": true,
-						"note":    "Pipeline and webhook created successfully.",
+				result := CreatePipelineResult{
+					Pipeline: pipeline,
+					Webhook: &WebhookInfo{
+						Created: err == nil,
+						Note:    "Pipeline and webhook created successfully.",
 					},
 				}
+
+				if err != nil {
+					result.Webhook.Error = err.Error()
+					result.Webhook.Note = "Pipeline created successfully, but webhook creation failed."
+				}
+
 				return mcpTextResult(span, &result)
 			}
 
-			return mcpTextResult(span, &pipeline)
+			result := CreatePipelineResult{
+				Pipeline: pipeline,
+			}
+			return mcpTextResult(span, &result)
 		}, []string{"write_pipelines"}
 }
 
