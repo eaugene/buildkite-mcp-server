@@ -294,7 +294,7 @@ type CreatePipelineArgs struct {
 	SkipQueuedBranchBuilds    bool     `json:"skip_queued_branch_builds"`
 	CancelRunningBranchBuilds bool     `json:"cancel_running_branch_builds"`
 	Tags                      []string `json:"tags"`
-	CreateWebhook             *bool    `json:"create_webhook"`
+	CreateWebhook             bool     `json:"create_webhook"`
 }
 
 func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToolHandlerFunc[CreatePipelineArgs], scopes []string) {
@@ -317,6 +317,11 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 				mcp.Required(),
 				mcp.Description("The pipeline configuration in YAML format. Contains the build steps and pipeline settings. If not provided, a basic configuration will be used"),
 			),
+			mcp.WithBoolean("create_webhook",
+				mcp.Required(),
+				mcp.Description("Create a GitHub webhook to trigger builds in response to pull-request and push events"),
+				mcp.DefaultBool(true),
+			),
 			mcp.WithString("description"),
 			mcp.WithString("default_branch",
 				mcp.Description("The default branch for builds and metrics filtering"),
@@ -326,10 +331,6 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 			),
 			mcp.WithBoolean("cancel_running_branch_builds",
 				mcp.Description("Cancel running builds when new builds are created on the same branch"),
-			),
-			mcp.WithBoolean("create_webhook",
-				mcp.Description("Create a GitHub webhook to trigger builds in response to pull-request and push events"),
-				mcp.DefaultBool(true),
 			),
 			mcp.WithArray("tags",
 				mcp.Description("Tags to apply to the pipeline. These can be used for filtering and organization"),
@@ -371,6 +372,7 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 			span.SetAttributes(
 				attribute.String("name", args.Name),
 				attribute.String("repository_url", args.RepositoryURL),
+				attribute.Bool("create_webhook", args.CreateWebhook),
 			)
 
 			create := buildkite.CreatePipeline{
@@ -400,13 +402,7 @@ func CreatePipeline(client PipelinesClient) (tool mcp.Tool, handler mcp.TypedToo
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 
-			// create webhooks by default to align with the behavior in the dashboard
-			createWebhook := true
-			if args.CreateWebhook != nil {
-				createWebhook = *args.CreateWebhook
-			}
-
-			if createWebhook {
+			if args.CreateWebhook {
 				_, err := client.AddWebhook(ctx, args.OrgSlug, pipeline.Slug)
 				result := CreatePipelineResult{
 					Pipeline: pipeline,
